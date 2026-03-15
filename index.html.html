@@ -71,6 +71,7 @@ html, body { font-family:'Inclusive Sans',sans-serif; background:var(--bg); over
   display:none;
   position:relative;
   width:100%;
+  overflow:visible; /* FIX: pastikan pieces tidak di-clip */
 }
 .game-desktop .grid-anchor {
   position:absolute; top:50%; left:50%;
@@ -107,6 +108,9 @@ html, body { font-family:'Inclusive Sans',sans-serif; background:var(--bg); over
 /* ── PIECES ── */
 .piece {
   background-repeat:no-repeat;
+  /* FIX: fallback warna supaya piece selalu terlihat */
+  background-color: rgba(114, 78, 145, 0.25);
+  border: 1px solid rgba(114,78,145,0.3);
   cursor:grab; touch-action:none;
   user-select:none; -webkit-user-select:none;
   border-radius:4px;
@@ -127,6 +131,8 @@ html, body { font-family:'Inclusive Sans',sans-serif; background:var(--bg); over
   box-shadow:0 8px 24px rgba(0,0,0,0.4);
   display:none;
   background-repeat:no-repeat;
+  /* FIX: fallback ghost */
+  background-color: rgba(114, 78, 145, 0.4);
 }
 
 /* ── DESKTOP SCATTER ── */
@@ -173,6 +179,11 @@ html, body { font-family:'Inclusive Sans',sans-serif; background:var(--bg); over
 
 /* ── FIREWORK ── */
 #fwCanvas { position:fixed; inset:0; pointer-events:none; z-index:8999; }
+
+/* ── ERROR MESSAGE ── */
+.error-msg {
+  color:#e74c3c; font-size:13px; margin-top:6px;
+}
 </style>
 </head>
 <body>
@@ -188,6 +199,7 @@ html, body { font-family:'Inclusive Sans',sans-serif; background:var(--bg); over
       <div style="background:#e0d0f0;border-radius:4px;height:8px;overflow:hidden;">
         <div id="loadBar" style="height:100%;background:var(--accent);width:0%;transition:width 0.25s;border-radius:4px;"></div>
       </div>
+      <div class="error-msg" id="loadError" style="display:none;"></div>
     </div>
     <button class="btn" id="startBtn" disabled onclick="startPuzzle()">Memuat…</button>
   </div>
@@ -281,7 +293,7 @@ function pickImage() {
 }
 
 function preloadImage(url) {
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     let pct = 0;
@@ -290,30 +302,58 @@ function preloadImage(url) {
       pct = Math.min(pct + Math.random() * 13, 88);
       bar.style.width = pct + '%';
     }, 180);
-    img.onload = img.onerror = () => {
+
+    // FIX: pisahkan onload dan onerror
+    img.onload = () => {
       clearInterval(tick);
       bar.style.width = '100%';
-      setTimeout(resolve, 250);
+      setTimeout(() => resolve(true), 250);
+    };
+    img.onerror = () => {
+      clearInterval(tick);
+      bar.style.width = '0%';
+      reject(new Error('Gambar gagal dimuat: ' + url));
     };
     img.src = url;
   });
 }
 
-PUZZLE_IMAGE = pickImage();
-preloadImage(PUZZLE_IMAGE).then(() => {
-  document.getElementById('loadText').textContent = '✅ Gambar siap!';
-  const btn = document.getElementById('startBtn');
-  btn.disabled = false;
-  btn.textContent = '🚀 Mulai!';
-});
+function initLoad() {
+  PUZZLE_IMAGE = pickImage();
+  preloadImage(PUZZLE_IMAGE).then(() => {
+    document.getElementById('loadText').textContent = '✅ Gambar siap!';
+    const btn = document.getElementById('startBtn');
+    btn.disabled = false;
+    btn.textContent = '🚀 Mulai!';
+  }).catch(err => {
+    // Coba gambar pertama sebagai fallback
+    PUZZLE_IMAGE = IMAGES[0];
+    preloadImage(PUZZLE_IMAGE).then(() => {
+      document.getElementById('loadText').textContent = '✅ Gambar siap!';
+      const btn = document.getElementById('startBtn');
+      btn.disabled = false;
+      btn.textContent = '🚀 Mulai!';
+    }).catch(() => {
+      document.getElementById('loadText').textContent = '❌ Gagal memuat gambar';
+      document.getElementById('loadError').style.display = 'block';
+      document.getElementById('loadError').textContent = 'Cek koneksi internet kamu.';
+    });
+  });
+}
+
+initLoad();
 
 // ══════════════════════════════════════════════════════
 //  BG STYLE HELPERS
+// FIX UTAMA: tambahkan quotes di url() agar aman untuk
+//  nama file yang mengandung tanda kurung seperti (4).png
 // ══════════════════════════════════════════════════════
 function applyBgToEl(el, row, col, pxSize) {
   const bpX = (col / (GRID - 1)) * 100;
   const bpY = (row / (GRID - 1)) * 100;
-  el.style.backgroundImage    = `url(${PUZZLE_IMAGE})`;
+  // ✅ FIX: pakai single quotes di dalam url() supaya
+  //    karakter seperti () di nama file tidak merusak CSS
+  el.style.backgroundImage    = `url('${PUZZLE_IMAGE}')`;
   el.style.backgroundSize     = `${GRID * pxSize}px ${GRID * pxSize}px`;
   el.style.backgroundPosition = `${bpX}% ${bpY}%`;
 }
@@ -395,6 +435,7 @@ function buildPiece(row, col, pxSize) {
   el.className = 'piece';
   el.dataset.row = row;
   el.dataset.col = col;
+  el.dataset.origSize = pxSize; // FIX: simpan ukuran asli untuk returnToPool
   el.style.width  = pxSize + 'px';
   el.style.height = pxSize + 'px';
   applyBgToEl(el, row, col, pxSize);
@@ -443,27 +484,50 @@ function initPuzzle() {
       s.style.height = piecePx + 'px';
     });
 
+    // Hapus scatter lama
     area.querySelectorAll('.scatter-wrap').forEach(w => w.remove());
 
-    const cx = vw / 2, cy = areaH / 2;
-    const half = actualGrid / 2 + 14;
-    const margin = 10;
+    const cx = vw / 2;
+    const cy = areaH / 2;
+    const half = actualGrid / 2 + 20;
+    const margin = 14;
 
     pieces.forEach(p => {
       const pieceEl = buildPiece(p.row, p.col, piecePx);
       const wrap = document.createElement('div');
       wrap.className = 'scatter-wrap';
 
-      let x, y, tries = 0;
-      do {
-        x = margin + Math.random() * (vw - piecePx - margin * 2);
-        y = margin + Math.random() * (areaH - piecePx - margin * 2);
-        tries++;
-      } while (
-        tries < 80 &&
-        x + piecePx > cx - half && x < cx + half &&
-        y + piecePx > cy - half && y < cy + half
-      );
+      // FIX: logika scatter yang lebih andal
+      // Bagi pieces ke 4 zona di sekeliling grid
+      let x, y;
+      const zone = Math.floor(Math.random() * 4);
+      const padding = margin;
+
+      if (zone === 0 && cx - half - piecePx - padding > padding) {
+        // Kiri grid
+        x = padding + Math.random() * (cx - half - piecePx - padding * 2);
+        y = padding + Math.random() * (areaH - piecePx - padding * 2);
+      } else if (zone === 1 && cx + half + piecePx + padding < vw) {
+        // Kanan grid
+        x = cx + half + padding + Math.random() * (vw - cx - half - piecePx - padding * 2);
+        y = padding + Math.random() * (areaH - piecePx - padding * 2);
+      } else if (zone === 2 && cy - half - piecePx - padding > padding) {
+        // Atas grid
+        x = padding + Math.random() * (vw - piecePx - padding * 2);
+        y = padding + Math.random() * (cy - half - piecePx - padding * 2);
+      } else {
+        // Bawah grid (atau fallback)
+        x = padding + Math.random() * (vw - piecePx - padding * 2);
+        const bottomStart = cy + half + padding;
+        const bottomMax = areaH - piecePx - padding;
+        y = bottomStart < bottomMax
+          ? bottomStart + Math.random() * (bottomMax - bottomStart)
+          : padding + Math.random() * (areaH - piecePx - padding * 2);
+      }
+
+      // Clamp agar tidak keluar viewport
+      x = Math.max(margin, Math.min(x, vw - piecePx - margin));
+      y = Math.max(margin, Math.min(y, areaH - piecePx - margin));
 
       wrap.style.left = x + 'px';
       wrap.style.top  = y + 'px';
@@ -558,9 +622,7 @@ function onPointerUp(e) {
   document.querySelectorAll('.slot.drag-over').forEach(s => s.classList.remove('drag-over'));
   dragInfo.pieceEl.classList.remove('dragging-active');
 
-  ghost.style.display = 'none';
   const under = document.elementFromPoint(e.clientX, e.clientY);
-  ghost.style.display = 'none';
   const targetSlot = under && under.closest('.slot');
 
   if (targetSlot) {
@@ -593,15 +655,13 @@ function cleanup(e) {
 //  PLACE LOGIC
 // ══════════════════════════════════════════════════════
 function dropOnSlot(targetSlot) {
-  const { pieceEl, row, col, fromSlot, fromWrap, pxSize } = dragInfo;
-  const slotSize = targetSlot.offsetWidth;
+  const { pieceEl, fromSlot, fromWrap } = dragInfo;
 
   const existingPiece = targetSlot.querySelector('.piece');
 
   if (existingPiece) {
+    // Ada piece di slot target — tukar posisi
     if (fromSlot) {
-      existingPiece.style.width  = parseInt(existingPiece.dataset._origSize || existingPiece.offsetWidth) + 'px';
-      existingPiece.style.height = parseInt(existingPiece.dataset._origSize || existingPiece.offsetWidth) + 'px';
       placePieceInSlot(existingPiece, fromSlot);
     } else {
       returnToPool(existingPiece);
@@ -618,41 +678,59 @@ function placePieceInSlot(pieceEl, slot) {
   pieceEl.style.height = slotSize + 'px';
   applyBgToEl(pieceEl, parseInt(pieceEl.dataset.row), parseInt(pieceEl.dataset.col), slotSize);
   pieceEl.style.borderRadius = '0';
+  pieceEl.style.border = 'none'; // hilangkan border debug di slot
   slot.innerHTML = '';
   slot.appendChild(pieceEl);
   slotContents.set(slot, { row: parseInt(pieceEl.dataset.row), col: parseInt(pieceEl.dataset.col) });
 }
 
 function returnToPool(pieceEl) {
+  const origSize = parseInt(pieceEl.dataset.origSize || 60);
   if (isMobile) {
-    const poolPiecePx = pieceEl.offsetWidth;
+    pieceEl.style.width  = origSize + 'px';
+    pieceEl.style.height = origSize + 'px';
+    applyBgToEl(pieceEl, parseInt(pieceEl.dataset.row), parseInt(pieceEl.dataset.col), origSize);
     pieceEl.style.borderRadius = '4px';
+    pieceEl.style.border = '1px solid rgba(114,78,145,0.3)';
     document.getElementById('mobilePool').appendChild(pieceEl);
   } else {
     const area = document.getElementById('gameDesktop');
     const areaW = area.offsetWidth;
     const areaH = area.offsetHeight;
-    const pxSize = parseInt(pieceEl.dataset._origSize || 60);
-    pieceEl.style.width  = pxSize + 'px';
-    pieceEl.style.height = pxSize + 'px';
-    applyBgToEl(pieceEl, parseInt(pieceEl.dataset.row), parseInt(pieceEl.dataset.col), pxSize);
+    pieceEl.style.width  = origSize + 'px';
+    pieceEl.style.height = origSize + 'px';
+    applyBgToEl(pieceEl, parseInt(pieceEl.dataset.row), parseInt(pieceEl.dataset.col), origSize);
     pieceEl.style.borderRadius = '4px';
+    pieceEl.style.border = '1px solid rgba(114,78,145,0.3)';
     const wrap = document.createElement('div');
     wrap.className = 'scatter-wrap';
-    wrap.style.left = (10 + Math.random() * (areaW - pxSize - 20)) + 'px';
-    wrap.style.top  = (10 + Math.random() * (areaH - pxSize - 20)) + 'px';
+    wrap.style.left = (14 + Math.random() * (areaW - origSize - 28)) + 'px';
+    wrap.style.top  = (14 + Math.random() * (areaH - origSize - 28)) + 'px';
     wrap.appendChild(pieceEl);
     area.appendChild(wrap);
   }
 }
 
+// FIX: returnPiece sekarang handle fromWrap (desktop scatter) dengan benar
 function returnPiece() {
   if (!dragInfo) return;
   const { pieceEl, fromSlot, fromWrap, pxSize } = dragInfo;
   if (fromSlot) {
+    // Kembalikan ke slot asal
     pieceEl.style.width  = fromSlot.offsetWidth + 'px';
     pieceEl.style.height = fromSlot.offsetWidth + 'px';
     fromSlot.appendChild(pieceEl);
+  } else if (fromWrap) {
+    // FIX: Kembalikan ke scatter wrap asal di desktop
+    pieceEl.style.width  = pxSize + 'px';
+    pieceEl.style.height = pxSize + 'px';
+    applyBgToEl(pieceEl, parseInt(pieceEl.dataset.row), parseInt(pieceEl.dataset.col), pxSize);
+    pieceEl.style.borderRadius = '4px';
+    pieceEl.style.border = '1px solid rgba(114,78,145,0.3)';
+    fromWrap.appendChild(pieceEl);
+  } else {
+    // Mobile pool — kembalikan ke pool
+    returnToPool(pieceEl);
   }
   pieceEl.style.opacity = '';
   pieceEl.classList.remove('dragging-active');
@@ -699,12 +777,9 @@ function startPuzzle() {
   startTimer();
   musicStopped = false;
   setTimeout(playLebaranMusic, 150);
-  
+
   if (typeof gtag !== 'undefined') {
-    gtag('event', 'puzzle_started', {
-      'event_category': 'Game',
-      'event_label': 'Lebaran Puzzle'
-    });
+    gtag('event', 'puzzle_started', { 'event_category': 'Game', 'event_label': 'Lebaran Puzzle' });
   }
 }
 
@@ -723,13 +798,17 @@ function restartGame() {
     startTimer();
     musicStopped = false;
     setTimeout(playLebaranMusic, 150);
-    
+
     if (typeof gtag !== 'undefined') {
-      gtag('event', 'puzzle_restarted', {
-        'event_category': 'Game',
-        'event_label': 'Lebaran Puzzle'
-      });
+      gtag('event', 'puzzle_restarted', { 'event_category': 'Game', 'event_label': 'Lebaran Puzzle' });
     }
+  }).catch(() => {
+    // fallback ke gambar pertama jika gagal
+    PUZZLE_IMAGE = IMAGES[0];
+    initPuzzle();
+    startTimer();
+    musicStopped = false;
+    setTimeout(playLebaranMusic, 150);
   });
 }
 
@@ -754,13 +833,9 @@ function finishPuzzle() {
   document.getElementById('victoryScreen').scrollTop = 0;
 
   setTimeout(() => { launchFireworks(); playVictorySound(); }, 400);
-  
+
   if (typeof gtag !== 'undefined') {
-    gtag('event', 'puzzle_completed', {
-      'event_category': 'Game',
-      'event_label': 'Lebaran Puzzle',
-      'value': parseFloat(elapsed)
-    });
+    gtag('event', 'puzzle_completed', { 'event_category': 'Game', 'event_label': 'Lebaran Puzzle', 'value': parseFloat(elapsed) });
   }
 }
 
@@ -773,12 +848,9 @@ function downloadImage() {
   link.download = 'lebaran_puzzle_' + Date.now() + '.png';
   link.href = canvas.toDataURL('image/png');
   link.click();
-  
+
   if (typeof gtag !== 'undefined') {
-    gtag('event', 'image_downloaded', {
-      'event_category': 'Engagement',
-      'event_label': 'Lebaran Puzzle'
-    });
+    gtag('event', 'image_downloaded', { 'event_category': 'Engagement', 'event_label': 'Lebaran Puzzle' });
   }
 }
 
@@ -850,12 +922,9 @@ function launchFireworks() {
 function showHint() {
   document.getElementById('hintImg').src = PUZZLE_IMAGE;
   document.getElementById('hintModal').classList.add('show');
-  
+
   if (typeof gtag !== 'undefined') {
-    gtag('event', 'hint_used', {
-      'event_category': 'Game',
-      'event_label': 'Lebaran Puzzle'
-    });
+    gtag('event', 'hint_used', { 'event_category': 'Game', 'event_label': 'Lebaran Puzzle' });
   }
 }
 
