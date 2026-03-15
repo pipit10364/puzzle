@@ -6,12 +6,12 @@
 <title>🌙 Lebaran Puzzle Challenge</title>
 
 <!-- Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-1JW6J76J6H"></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-VFRT453MG0"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-  gtag('config', 'G-1JW6J76J6H');
+  gtag('config', 'G-VFRT453MG0');
 </script>
 
 <link href="https://fonts.googleapis.com/css2?family=Inclusive+Sans&display=swap" rel="stylesheet">
@@ -52,11 +52,9 @@ html, body { font-family:'Inclusive Sans',sans-serif; background:var(--bg); over
 }
 .btn:hover { background:var(--emphasis); transform:translateY(-2px); }
 .btn:disabled { background:#bbb; cursor:not-allowed; transform:none; }
-
-.btn-download {
-  background: #2ecc71; margin-right: 8px;
-}
-.btn-download:hover { background: #27ae60; }
+.btn-download { background:#2ecc71; }
+.btn-download:hover { background:#27ae60; }
+.btn-row { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
 
 /* ── HEADER ── */
 .header {
@@ -66,24 +64,17 @@ html, body { font-family:'Inclusive Sans',sans-serif; background:var(--bg); over
 .header h1 { font-size:20px; margin-bottom:4px; }
 .timer { font-size:42px; font-weight:700; color:var(--accent); letter-spacing:2px; }
 
-/* ── GAME WRAPPER ── */
+/* ── GAME LAYOUTS ── */
 .game-desktop {
-  display:none;
-  position:relative;
-  width:100%;
+  display:none; position:relative; width:100%;
 }
 .game-desktop .grid-anchor {
   position:absolute; top:50%; left:50%;
-  transform:translate(-50%,-50%);
-  z-index:10;
+  transform:translate(-50%,-50%); z-index:10;
 }
-
 .game-mobile {
-  display:none;
-  flex-direction:column;
-  align-items:center;
-  padding:14px 10px 90px;
-  gap:14px;
+  display:none; flex-direction:column;
+  align-items:center; padding:14px 10px 90px; gap:14px;
 }
 
 /* ── PUZZLE GRID ── */
@@ -97,7 +88,7 @@ html, body { font-family:'Inclusive Sans',sans-serif; background:var(--bg); over
 .slot {
   background:rgba(255,255,255,0.18);
   position:relative; overflow:visible;
-  transition:background .12s, outline .12s;
+  transition:background .12s;
 }
 .slot.drag-over {
   background:rgba(242,201,76,0.5);
@@ -109,30 +100,22 @@ html, body { font-family:'Inclusive Sans',sans-serif; background:var(--bg); over
   background-repeat:no-repeat;
   cursor:grab; touch-action:none;
   user-select:none; -webkit-user-select:none;
-  border-radius:4px;
-  transition:box-shadow .12s;
-  position:relative; z-index:5;
+  border-radius:4px; position:relative; z-index:5;
 }
 .piece:active { cursor:grabbing; }
-.piece.dragging-active {
-  opacity:0.35;
-}
+.piece.dragging-active { opacity:0.3; }
 
+/* ── GHOST ── */
 #ghostPiece {
-  position:fixed;
-  pointer-events:none;
-  z-index:9500;
-  border-radius:4px;
-  opacity:0.85;
-  box-shadow:0 8px 24px rgba(0,0,0,0.4);
-  display:none;
-  background-repeat:no-repeat;
+  position:fixed; pointer-events:none; z-index:9500;
+  border-radius:4px; opacity:0.88;
+  box-shadow:0 8px 28px rgba(0,0,0,0.45);
+  display:none; background-repeat:no-repeat;
+  transition:none;
 }
 
 /* ── DESKTOP SCATTER ── */
-.scatter-wrap {
-  position:absolute;
-}
+.scatter-wrap { position:absolute; }
 
 /* ── MOBILE POOL ── */
 .mobile-pool {
@@ -153,7 +136,6 @@ html, body { font-family:'Inclusive Sans',sans-serif; background:var(--bg); over
   transition:background .2s, transform .15s;
 }
 .hint-btn:hover { background:#e05a10; transform:scale(1.05); }
-
 .hint-modal {
   position:fixed; top:80px; left:50%; transform:translateX(-50%);
   background:#fff; padding:14px; border-radius:16px;
@@ -181,8 +163,8 @@ html, body { font-family:'Inclusive Sans',sans-serif; background:var(--bg); over
 <div class="screen" id="startScreen">
   <div class="card">
     <h2>🌙 Lebaran Puzzle Challenge ✨</h2>
-    <p>Susun 36 puzzle pieces secepat mungkin! 🎉</p>
-    <p style="font-size:13px;color:#999;">Drag pieces langsung ke tempatnya.<br>Pieces bisa digeser-geser sampai pas! 💡</p>
+    <p>Susun 36 puzzle pieces secepat mungkin!<br>Yang tercepat menang <strong style="color:var(--emphasis)">THR 50K</strong> 🎉</p>
+    <p style="font-size:13px;color:#999;">Drag pieces langsung ke tempatnya.<br>Pieces bisa digeser-geser sampai pas!</p>
     <div style="background:#f0e6ff;border-radius:12px;padding:14px 16px;margin:14px 0;text-align:left;">
       <div style="font-size:13px;color:#724E91;margin-bottom:8px;" id="loadText">⏳ Memuat gambar…</div>
       <div style="background:#e0d0f0;border-radius:4px;height:8px;overflow:hidden;">
@@ -201,7 +183,7 @@ html, body { font-family:'Inclusive Sans',sans-serif; background:var(--bg); over
     <p>Puzzle selesai! Ini hasilnya:</p>
     <canvas id="solvedCanvas"></canvas>
     <p style="font-size:13px;color:#999;">📸 Screenshot waktumu & share!</p>
-    <div>
+    <div class="btn-row">
       <button class="btn btn-download" onclick="downloadImage()">📥 Download Foto</button>
       <button class="btn" onclick="restartGame()">🔄 Main Lagi</button>
     </div>
@@ -229,14 +211,14 @@ html, body { font-family:'Inclusive Sans',sans-serif; background:var(--bg); over
   <div class="timer" id="timer">00:00.0</div>
 </div>
 
-<!-- DESKTOP layout -->
+<!-- DESKTOP -->
 <div class="game-desktop" id="gameDesktop">
   <div class="grid-anchor">
     <div class="puzzle-grid" id="desktopGrid"></div>
   </div>
 </div>
 
-<!-- MOBILE layout -->
+<!-- MOBILE -->
 <div class="game-mobile" id="gameMobile">
   <div class="puzzle-grid" id="mobileGrid"></div>
   <div class="pool-label">Pieces — drag ke atas grid 👆</div>
@@ -263,21 +245,36 @@ const GRID = 6;
 //  STATE
 // ══════════════════════════════════════════════════════
 let PUZZLE_IMAGE = '';
-let completedPieces = 0;
 let startTime = null;
 let timerInterval = null;
 let audioCtx = null;
 let musicStopped = false;
 let isMobile = false;
-
 let dragInfo = null;
-let slotContents = new Map();
+// Track piece sizes per layout so returnToPool always has correct px
+let PIECE_PX = 60;       // desktop piece size
+let POOL_PIECE_PX = 50;  // mobile pool piece size
+let SLOT_PX = 60;        // slot size (same as PIECE_PX on desktop, different on mobile)
+
+// ══════════════════════════════════════════════════════
+//  ANALYTICS HELPER
+// ══════════════════════════════════════════════════════
+function track(name, params) {
+  if (typeof gtag !== 'undefined') gtag('event', name, { event_category: 'Game', ...params });
+}
 
 // ══════════════════════════════════════════════════════
 //  IMAGE PRELOAD
 // ══════════════════════════════════════════════════════
+let usedImages = [];
+
 function pickImage() {
-  return IMAGES[Math.floor(Math.random() * IMAGES.length)];
+  // Avoid repeating until all images have been used
+  if (usedImages.length >= IMAGES.length) usedImages = [];
+  const remaining = IMAGES.filter(i => !usedImages.includes(i));
+  const pick = remaining[Math.floor(Math.random() * remaining.length)];
+  usedImages.push(pick);
+  return pick;
 }
 
 function preloadImage(url) {
@@ -287,18 +284,19 @@ function preloadImage(url) {
     let pct = 0;
     const bar = document.getElementById('loadBar');
     const tick = setInterval(() => {
-      pct = Math.min(pct + Math.random() * 13, 88);
-      bar.style.width = pct + '%';
+      pct = Math.min(pct + Math.random() * 14, 88);
+      if (bar) bar.style.width = pct + '%';
     }, 180);
     img.onload = img.onerror = () => {
       clearInterval(tick);
-      bar.style.width = '100%';
-      setTimeout(resolve, 250);
+      if (bar) bar.style.width = '100%';
+      setTimeout(resolve, 200);
     };
     img.src = url;
   });
 }
 
+// Start preloading on page load
 PUZZLE_IMAGE = pickImage();
 preloadImage(PUZZLE_IMAGE).then(() => {
   document.getElementById('loadText').textContent = '✅ Gambar siap!';
@@ -308,14 +306,17 @@ preloadImage(PUZZLE_IMAGE).then(() => {
 });
 
 // ══════════════════════════════════════════════════════
-//  BG STYLE HELPERS
+//  BACKGROUND HELPER — the one correct formula
 // ══════════════════════════════════════════════════════
-function applyBgToEl(el, row, col, pxSize) {
+function applyBg(el, row, col, pxSize) {
+  // backgroundSize = full image rendered at GRID*pxSize square
+  // backgroundPosition uses % so the correct slice shows regardless of element size
   const bpX = (col / (GRID - 1)) * 100;
   const bpY = (row / (GRID - 1)) * 100;
   el.style.backgroundImage    = `url(${PUZZLE_IMAGE})`;
   el.style.backgroundSize     = `${GRID * pxSize}px ${GRID * pxSize}px`;
   el.style.backgroundPosition = `${bpX}% ${bpY}%`;
+  el.style.backgroundRepeat   = 'no-repeat';
 }
 
 // ══════════════════════════════════════════════════════
@@ -327,8 +328,7 @@ function initAudio() {
 }
 
 function synthNote(freq, type, t, dur, vol) {
-  const osc = audioCtx.createOscillator();
-  const g   = audioCtx.createGain();
+  const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
   osc.type = type; osc.frequency.value = freq;
   osc.connect(g); g.connect(audioCtx.destination);
   g.gain.setValueAtTime(0, t);
@@ -338,13 +338,12 @@ function synthNote(freq, type, t, dur, vol) {
 }
 
 function drumHit(t, decay, vol) {
-  const len  = Math.ceil(audioCtx.sampleRate * decay * 5);
-  const buf  = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+  const len = Math.ceil(audioCtx.sampleRate * decay * 5);
+  const buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
   const data = buf.getChannelData(0);
   for (let i = 0; i < len; i++)
     data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (audioCtx.sampleRate * decay));
-  const src = audioCtx.createBufferSource();
-  const g   = audioCtx.createGain();
+  const src = audioCtx.createBufferSource(), g = audioCtx.createGain();
   src.buffer = buf; g.gain.value = vol;
   src.connect(g); g.connect(audioCtx.destination);
   src.start(t);
@@ -353,9 +352,9 @@ function drumHit(t, decay, vol) {
 function playLebaranMusic() {
   if (!audioCtx || musicStopped) return;
   const t = audioCtx.currentTime;
-  [523,587,659,698,783,698,659,587].forEach((f,i) => synthNote(f,'triangle', t+i*0.38, 0.32, 0.06));
-  [261,293,261,329].forEach((f,i)            => synthNote(f,'sine',     t+i*0.76, 0.65, 0.04));
-  [0, 0.76, 1.52, 2.28, 2.66].forEach(o     => drumHit(t+o, 0.04, 0.18));
+  [523,587,659,698,783,698,659,587].forEach((f,i) => synthNote(f,'triangle',t+i*0.38,0.32,0.06));
+  [261,293,261,329].forEach((f,i) => synthNote(f,'sine',t+i*0.76,0.65,0.04));
+  [0,0.76,1.52,2.28,2.66].forEach(o => drumHit(t+o,0.04,0.18));
   if (!musicStopped) window._mLoop = setTimeout(playLebaranMusic, 8 * 0.38 * 1000);
 }
 
@@ -367,25 +366,26 @@ function stopMusic() {
 function playVictorySound() {
   if (!audioCtx) return;
   const t = audioCtx.currentTime;
-  [523,659,783,1046].forEach((f,i) => synthNote(f,'square', t+i*0.18, 0.42, 0.08));
-  [0.8,1.05,1.3,1.55,1.8,1.95,2.1,2.25,2.4].forEach(o => drumHit(t+o, 0.07, 0.45));
-  synthNote(1318,'sine', t+0.8, 0.6, 0.06);
+  [523,659,783,1046].forEach((f,i) => synthNote(f,'square',t+i*0.18,0.42,0.08));
+  [0.8,1.05,1.3,1.55,1.8,1.95,2.1,2.25,2.4].forEach(o => drumHit(t+o,0.07,0.45));
+  synthNote(1318,'sine',t+0.8,0.6,0.06);
 }
 
 // ══════════════════════════════════════════════════════
 //  BUILD PUZZLE
 // ══════════════════════════════════════════════════════
-function buildGrid(gridEl, pxSize) {
+function buildGrid(gridEl, totalPx) {
   gridEl.innerHTML = '';
-  slotContents.clear();
-  gridEl.style.width  = pxSize + 'px';
-  gridEl.style.height = pxSize + 'px';
-
+  gridEl.style.width  = totalPx + 'px';
+  gridEl.style.height = totalPx + 'px';
+  const slotPx = Math.floor(totalPx / GRID);
+  SLOT_PX = slotPx;
   for (let i = 0; i < GRID * GRID; i++) {
     const slot = document.createElement('div');
     slot.className = 'slot';
     slot.dataset.slotIndex = i;
-    slotContents.set(slot, null);
+    slot.style.width  = slotPx + 'px';
+    slot.style.height = slotPx + 'px';
     gridEl.appendChild(slot);
   }
 }
@@ -395,10 +395,10 @@ function buildPiece(row, col, pxSize) {
   el.className = 'piece';
   el.dataset.row = row;
   el.dataset.col = col;
+  el.dataset.pxSize = pxSize;   // ← store original size on element
   el.style.width  = pxSize + 'px';
   el.style.height = pxSize + 'px';
-  applyBgToEl(el, row, col, pxSize);
-
+  applyBg(el, row, col, pxSize);
   el.addEventListener('pointerdown', onPiecePointerDown);
   return el;
 }
@@ -413,56 +413,49 @@ function shuffleArray(arr) {
 
 function initPuzzle() {
   isMobile = window.innerWidth <= 680;
-  completedPieces = 0;
   dragInfo = null;
 
   const pieces = [];
   for (let r = 0; r < GRID; r++)
     for (let c = 0; c < GRID; c++)
-      pieces.push({row: r, col: c});
+      pieces.push({ row: r, col: c });
   shuffleArray(pieces);
 
   if (!isMobile) {
+    // ── DESKTOP ──
     document.getElementById('gameDesktop').style.display = 'block';
     document.getElementById('gameMobile').style.display  = 'none';
 
     const vw = window.innerWidth;
     const vh = window.innerHeight - 80;
     const areaH = Math.max(vh, 520);
-    const gridPx = Math.min(390, vw * 0.38, areaH * 0.72);
-    const piecePx = Math.round(gridPx / GRID);
-    const actualGrid = piecePx * GRID;
+    const gridPx = Math.floor(Math.min(390, vw * 0.38, areaH * 0.72) / GRID) * GRID;
+    PIECE_PX = gridPx / GRID;
 
     const area = document.getElementById('gameDesktop');
     area.style.height = areaH + 'px';
-
-    const gridEl = document.getElementById('desktopGrid');
-    buildGrid(gridEl, actualGrid);
-    gridEl.querySelectorAll('.slot').forEach(s => {
-      s.style.width  = piecePx + 'px';
-      s.style.height = piecePx + 'px';
-    });
-
     area.querySelectorAll('.scatter-wrap').forEach(w => w.remove());
 
+    buildGrid(document.getElementById('desktopGrid'), gridPx);
+
+    // Scatter pieces around the grid
     const cx = vw / 2, cy = areaH / 2;
-    const half = actualGrid / 2 + 14;
-    const margin = 10;
+    const half = gridPx / 2 + 16;
 
     pieces.forEach(p => {
-      const pieceEl = buildPiece(p.row, p.col, piecePx);
+      const pieceEl = buildPiece(p.row, p.col, PIECE_PX);
       const wrap = document.createElement('div');
       wrap.className = 'scatter-wrap';
 
       let x, y, tries = 0;
       do {
-        x = margin + Math.random() * (vw - piecePx - margin * 2);
-        y = margin + Math.random() * (areaH - piecePx - margin * 2);
+        x = 8 + Math.random() * (vw - PIECE_PX - 16);
+        y = 8 + Math.random() * (areaH - PIECE_PX - 16);
         tries++;
       } while (
-        tries < 80 &&
-        x + piecePx > cx - half && x < cx + half &&
-        y + piecePx > cy - half && y < cy + half
+        tries < 100 &&
+        x + PIECE_PX > cx - half && x < cx + half &&
+        y + PIECE_PX > cy - half && y < cy + half
       );
 
       wrap.style.left = x + 'px';
@@ -472,78 +465,74 @@ function initPuzzle() {
     });
 
   } else {
+    // ── MOBILE ──
     document.getElementById('gameDesktop').style.display = 'none';
     document.getElementById('gameMobile').style.display  = 'flex';
 
     const vw = window.innerWidth;
-    const gridPx = Math.min(vw - 24, 390);
-    const piecePx = Math.round(gridPx / GRID);
-    const actualGrid = piecePx * GRID;
-    const poolPiecePx = Math.min(52, Math.floor((vw - 40) / 7));
+    const gridPx = Math.floor(Math.min(vw - 20, 390) / GRID) * GRID;
+    PIECE_PX = gridPx / GRID;
+    POOL_PIECE_PX = Math.max(40, Math.min(52, Math.floor((vw - 48) / 7)));
 
-    const gridEl = document.getElementById('mobileGrid');
-    buildGrid(gridEl, actualGrid);
-    gridEl.querySelectorAll('.slot').forEach(s => {
-      s.style.width  = piecePx + 'px';
-      s.style.height = piecePx + 'px';
-    });
+    buildGrid(document.getElementById('mobileGrid'), gridPx);
 
     const pool = document.getElementById('mobilePool');
     pool.innerHTML = '';
-    pieces.forEach(p => pool.appendChild(buildPiece(p.row, p.col, poolPiecePx)));
+    pieces.forEach(p => pool.appendChild(buildPiece(p.row, p.col, POOL_PIECE_PX)));
   }
 }
 
 // ══════════════════════════════════════════════════════
-//  DRAG SYSTEM
+//  DRAG SYSTEM — unified Pointer Events
 // ══════════════════════════════════════════════════════
 const ghost = document.getElementById('ghostPiece');
 
 function onPiecePointerDown(e) {
   if (e.button !== undefined && e.button !== 0) return;
   const pieceEl = e.currentTarget;
-  if (pieceEl.classList.contains('no-drag')) return;
+  e.preventDefault(); e.stopPropagation();
 
-  e.preventDefault();
-  e.stopPropagation();
-
-  const rect = pieceEl.getBoundingClientRect();
-  const pxSize = pieceEl.offsetWidth;
-  const row = parseInt(pieceEl.dataset.row);
-  const col = parseInt(pieceEl.dataset.col);
-
+  const rect     = pieceEl.getBoundingClientRect();
+  const pxSize   = parseInt(pieceEl.dataset.pxSize) || pieceEl.offsetWidth;
+  const row      = parseInt(pieceEl.dataset.row);
+  const col      = parseInt(pieceEl.dataset.col);
   const fromSlot = pieceEl.closest('.slot') || null;
   const fromWrap = pieceEl.closest('.scatter-wrap') || null;
 
+  // Show ghost at piece position
   ghost.style.width    = pxSize + 'px';
   ghost.style.height   = pxSize + 'px';
-  applyBgToEl(ghost, row, col, pxSize);
+  applyBg(ghost, row, col, pxSize);
   ghost.style.display  = 'block';
   ghost.style.left     = rect.left + 'px';
   ghost.style.top      = rect.top  + 'px';
-  ghost.style.borderRadius = '4px';
 
-  const offsetX = e.clientX - rect.left;
-  const offsetY = e.clientY - rect.top;
-
-  dragInfo = { pieceEl, row, col, fromSlot, fromWrap, pxSize, offsetX, offsetY };
+  dragInfo = {
+    pieceEl, row, col, fromSlot, fromWrap, pxSize,
+    offsetX: e.clientX - rect.left,
+    offsetY: e.clientY - rect.top
+  };
 
   pieceEl.classList.add('dragging-active');
   pieceEl.setPointerCapture(e.pointerId);
-
   pieceEl.addEventListener('pointermove',   onPointerMove);
   pieceEl.addEventListener('pointerup',     onPointerUp);
-  pieceEl.addEventListener('pointercancel', onPointerCancel);
+  pieceEl.addEventListener('pointercancel', cancelDrag);
 }
 
 function onPointerMove(e) {
   if (!dragInfo) return;
   e.preventDefault();
-  ghost.style.left = (e.clientX - dragInfo.offsetX) + 'px';
-  ghost.style.top  = (e.clientY - dragInfo.offsetY) + 'px';
+  const gx = e.clientX - dragInfo.offsetX;
+  const gy = e.clientY - dragInfo.offsetY;
+  ghost.style.left = gx + 'px';
+  ghost.style.top  = gy + 'px';
 
+  // Highlight slot under ghost center
+  const cx = gx + dragInfo.pxSize / 2;
+  const cy = gy + dragInfo.pxSize / 2;
   ghost.style.display = 'none';
-  const under = document.elementFromPoint(e.clientX, e.clientY);
+  const under = document.elementFromPoint(cx, cy);
   ghost.style.display = 'block';
   document.querySelectorAll('.slot.drag-over').forEach(s => s.classList.remove('drag-over'));
   const slot = under && under.closest('.slot');
@@ -554,38 +543,34 @@ function onPointerUp(e) {
   if (!dragInfo) return;
   e.preventDefault();
 
+  // Find slot under ghost center
+  const gx = e.clientX - dragInfo.offsetX;
+  const gy = e.clientY - dragInfo.offsetY;
+  const cx = gx + dragInfo.pxSize / 2;
+  const cy = gy + dragInfo.pxSize / 2;
+
   ghost.style.display = 'none';
   document.querySelectorAll('.slot.drag-over').forEach(s => s.classList.remove('drag-over'));
-  dragInfo.pieceEl.classList.remove('dragging-active');
 
-  ghost.style.display = 'none';
-  const under = document.elementFromPoint(e.clientX, e.clientY);
-  ghost.style.display = 'none';
+  const under      = document.elementFromPoint(cx, cy);
   const targetSlot = under && under.closest('.slot');
 
-  if (targetSlot) {
-    dropOnSlot(targetSlot);
-  } else {
-    returnPiece();
-  }
+  if (targetSlot) dropOnSlot(targetSlot);
+  else            returnPiece();
 
-  cleanup(e);
+  endDrag();
 }
 
-function onPointerCancel(e) {
-  if (!dragInfo) return;
-  returnPiece();
-  cleanup(e);
-}
+function cancelDrag() { returnPiece(); endDrag(); }
 
-function cleanup(e) {
+function endDrag() {
   if (!dragInfo) return;
   ghost.style.display = 'none';
   dragInfo.pieceEl.classList.remove('dragging-active');
   dragInfo.pieceEl.style.opacity = '';
   dragInfo.pieceEl.removeEventListener('pointermove',   onPointerMove);
   dragInfo.pieceEl.removeEventListener('pointerup',     onPointerUp);
-  dragInfo.pieceEl.removeEventListener('pointercancel', onPointerCancel);
+  dragInfo.pieceEl.removeEventListener('pointercancel', cancelDrag);
   dragInfo = null;
 }
 
@@ -593,18 +578,18 @@ function cleanup(e) {
 //  PLACE LOGIC
 // ══════════════════════════════════════════════════════
 function dropOnSlot(targetSlot) {
-  const { pieceEl, row, col, fromSlot, fromWrap, pxSize } = dragInfo;
-  const slotSize = targetSlot.offsetWidth;
+  const { pieceEl, fromSlot } = dragInfo;
+  const slotPx = targetSlot.offsetWidth;
 
-  const existingPiece = targetSlot.querySelector('.piece');
-
-  if (existingPiece) {
+  // Handle existing piece in target slot
+  const existing = targetSlot.querySelector('.piece');
+  if (existing) {
     if (fromSlot) {
-      existingPiece.style.width  = parseInt(existingPiece.dataset._origSize || existingPiece.offsetWidth) + 'px';
-      existingPiece.style.height = parseInt(existingPiece.dataset._origSize || existingPiece.offsetWidth) + 'px';
-      placePieceInSlot(existingPiece, fromSlot);
+      // Swap: send existing back to fromSlot
+      placePieceInSlot(existing, fromSlot);
     } else {
-      returnToPool(existingPiece);
+      // Piece came from pool/scatter — kick existing back there
+      sendPieceToPool(existing);
     }
   }
 
@@ -613,34 +598,40 @@ function dropOnSlot(targetSlot) {
 }
 
 function placePieceInSlot(pieceEl, slot) {
-  const slotSize = slot.offsetWidth;
-  pieceEl.style.width  = slotSize + 'px';
-  pieceEl.style.height = slotSize + 'px';
-  applyBgToEl(pieceEl, parseInt(pieceEl.dataset.row), parseInt(pieceEl.dataset.col), slotSize);
+  const slotPx = slot.offsetWidth;
+  pieceEl.style.width        = slotPx + 'px';
+  pieceEl.style.height       = slotPx + 'px';
   pieceEl.style.borderRadius = '0';
+  applyBg(pieceEl, parseInt(pieceEl.dataset.row), parseInt(pieceEl.dataset.col), slotPx);
+  // Update stored size so future moves use correct px
+  pieceEl.dataset.pxSize = slotPx;
   slot.innerHTML = '';
   slot.appendChild(pieceEl);
-  slotContents.set(slot, { row: parseInt(pieceEl.dataset.row), col: parseInt(pieceEl.dataset.col) });
 }
 
-function returnToPool(pieceEl) {
+function sendPieceToPool(pieceEl) {
   if (isMobile) {
-    const poolPiecePx = pieceEl.offsetWidth;
+    const px = POOL_PIECE_PX;
+    pieceEl.style.width        = px + 'px';
+    pieceEl.style.height       = px + 'px';
     pieceEl.style.borderRadius = '4px';
+    pieceEl.dataset.pxSize     = px;
+    applyBg(pieceEl, parseInt(pieceEl.dataset.row), parseInt(pieceEl.dataset.col), px);
     document.getElementById('mobilePool').appendChild(pieceEl);
   } else {
-    const area = document.getElementById('gameDesktop');
-    const areaW = area.offsetWidth;
-    const areaH = area.offsetHeight;
-    const pxSize = parseInt(pieceEl.dataset._origSize || 60);
-    pieceEl.style.width  = pxSize + 'px';
-    pieceEl.style.height = pxSize + 'px';
-    applyBgToEl(pieceEl, parseInt(pieceEl.dataset.row), parseInt(pieceEl.dataset.col), pxSize);
+    const px = PIECE_PX;
+    pieceEl.style.width        = px + 'px';
+    pieceEl.style.height       = px + 'px';
     pieceEl.style.borderRadius = '4px';
+    pieceEl.dataset.pxSize     = px;
+    applyBg(pieceEl, parseInt(pieceEl.dataset.row), parseInt(pieceEl.dataset.col), px);
+
+    const area = document.getElementById('gameDesktop');
+    const aW = area.offsetWidth, aH = area.offsetHeight;
     const wrap = document.createElement('div');
     wrap.className = 'scatter-wrap';
-    wrap.style.left = (10 + Math.random() * (areaW - pxSize - 20)) + 'px';
-    wrap.style.top  = (10 + Math.random() * (areaH - pxSize - 20)) + 'px';
+    wrap.style.left = (8 + Math.random() * Math.max(0, aW - px - 16)) + 'px';
+    wrap.style.top  = (8 + Math.random() * Math.max(0, aH - px - 16)) + 'px';
     wrap.appendChild(pieceEl);
     area.appendChild(wrap);
   }
@@ -650,29 +641,30 @@ function returnPiece() {
   if (!dragInfo) return;
   const { pieceEl, fromSlot, fromWrap, pxSize } = dragInfo;
   if (fromSlot) {
-    pieceEl.style.width  = fromSlot.offsetWidth + 'px';
-    pieceEl.style.height = fromSlot.offsetWidth + 'px';
-    fromSlot.appendChild(pieceEl);
+    // Put back in its original slot
+    placePieceInSlot(pieceEl, fromSlot);
+  } else if (fromWrap) {
+    // Already still in scatter wrap (we didn't remove it), just reset opacity
+    pieceEl.style.opacity = '';
+    pieceEl.dataset.pxSize = pxSize;
+    applyBg(pieceEl, parseInt(pieceEl.dataset.row), parseInt(pieceEl.dataset.col), pxSize);
   }
-  pieceEl.style.opacity = '';
-  pieceEl.classList.remove('dragging-active');
+  // If from mobile pool, it's still in pool DOM — nothing to do
 }
 
 function checkCompletion() {
+  const slots = document.querySelectorAll('.slot');
+  if (slots.length < GRID * GRID) return;
   let correct = 0;
-  document.querySelectorAll('.slot').forEach(slot => {
+  slots.forEach(slot => {
     const piece = slot.querySelector('.piece');
     if (!piece) return;
-    const slotIdx = parseInt(slot.dataset.slotIndex);
-    const expectedRow = Math.floor(slotIdx / GRID);
-    const expectedCol = slotIdx % GRID;
-    if (parseInt(piece.dataset.row) === expectedRow && parseInt(piece.dataset.col) === expectedCol) {
-      correct++;
-    }
+    const idx  = parseInt(slot.dataset.slotIndex);
+    const eRow = Math.floor(idx / GRID);
+    const eCol = idx % GRID;
+    if (parseInt(piece.dataset.row) === eRow && parseInt(piece.dataset.col) === eCol) correct++;
   });
-  if (correct === GRID * GRID) {
-    finishPuzzle();
-  }
+  if (correct === GRID * GRID) finishPuzzle();
 }
 
 // ══════════════════════════════════════════════════════
@@ -684,8 +676,7 @@ function startTimer() {
     const e = (Date.now() - startTime) / 1000;
     const m = Math.floor(e / 60);
     const s = (e % 60).toFixed(1).padStart(4, '0');
-    document.getElementById('timer').textContent =
-      String(m).padStart(2, '0') + ':' + s;
+    document.getElementById('timer').textContent = String(m).padStart(2,'0') + ':' + s;
   }, 100);
 }
 
@@ -699,39 +690,23 @@ function startPuzzle() {
   startTimer();
   musicStopped = false;
   setTimeout(playLebaranMusic, 150);
-  
-  // Track puzzle start
-  if (typeof gtag !== 'undefined') {
-    gtag('event', 'puzzle_started', {
-      'event_category': 'Game',
-      'event_label': 'Lebaran Puzzle'
-    });
-  }
+  track('puzzle_started', { event_label: 'Lebaran Puzzle' });
 }
 
 function restartGame() {
   clearInterval(timerInterval);
   stopMusic();
-  PUZZLE_IMAGE = pickImage();
   document.getElementById('victoryScreen').classList.add('hidden');
   document.getElementById('timer').textContent = '00:00.0';
-  document.getElementById('loadBar').style.width = '0%';
-  document.getElementById('loadText').textContent = '⏳ Memuat gambar…';
 
+  PUZZLE_IMAGE = pickImage();
+  // Show mini loading state inline (no overlay)
   preloadImage(PUZZLE_IMAGE).then(() => {
-    document.getElementById('loadText').textContent = '✅ Siap!';
     initPuzzle();
     startTimer();
     musicStopped = false;
     setTimeout(playLebaranMusic, 150);
-    
-    // Track restart
-    if (typeof gtag !== 'undefined') {
-      gtag('event', 'puzzle_restarted', {
-        'event_category': 'Game',
-        'event_label': 'Lebaran Puzzle'
-      });
-    }
+    track('puzzle_restarted', { event_label: 'Lebaran Puzzle' });
   });
 }
 
@@ -742,6 +717,7 @@ function finishPuzzle() {
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
   document.getElementById('finalTime').textContent = '⏱ ' + elapsed + ' detik';
 
+  // Draw full-res image on canvas
   const canvas = document.getElementById('solvedCanvas');
   const img = new Image();
   img.crossOrigin = 'anonymous';
@@ -756,34 +732,30 @@ function finishPuzzle() {
   document.getElementById('victoryScreen').scrollTop = 0;
 
   setTimeout(() => { launchFireworks(); playVictorySound(); }, 400);
-  
-  // Track puzzle completion
-  if (typeof gtag !== 'undefined') {
-    gtag('event', 'puzzle_completed', {
-      'event_category': 'Game',
-      'event_label': 'Lebaran Puzzle',
-      'value': parseFloat(elapsed)
-    });
-  }
+  track('puzzle_completed', { event_label: 'Lebaran Puzzle', value: parseFloat(elapsed) });
 }
 
 // ══════════════════════════════════════════════════════
-//  DOWNLOAD IMAGE
+//  DOWNLOAD
 // ══════════════════════════════════════════════════════
 function downloadImage() {
-  const canvas = document.getElementById('solvedCanvas');
-  const link = document.createElement('a');
-  link.download = 'lebaran_puzzle_' + Date.now() + '.png';
-  link.href = canvas.toDataURL('image/png');
-  link.click();
-  
-  // Track download
-  if (typeof gtag !== 'undefined') {
-    gtag('event', 'image_downloaded', {
-      'event_category': 'Engagement',
-      'event_label': 'Lebaran Puzzle'
+  // Download original full-res image directly
+  const a = document.createElement('a');
+  a.href = PUZZLE_IMAGE;
+  a.download = 'lebaran_puzzle.png';
+  // For cross-origin images, fetch as blob first
+  fetch(PUZZLE_IMAGE)
+    .then(r => r.blob())
+    .then(blob => {
+      a.href = URL.createObjectURL(blob);
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    })
+    .catch(() => {
+      // Fallback: open in new tab
+      window.open(PUZZLE_IMAGE, '_blank');
     });
-  }
+  track('image_downloaded', { event_category: 'Engagement', event_label: 'Lebaran Puzzle' });
 }
 
 // ══════════════════════════════════════════════════════
@@ -795,8 +767,7 @@ function launchFireworks() {
   canvas.height = window.innerHeight;
   const ctx = canvas.getContext('2d');
   const colors = ['#724E91','#ff7728','#f2c94c','#fff','#e74c3c','#2ecc71','#3498db','#fd79a8'];
-  let particles = [];
-  let launching = true;
+  let particles = [], launching = true;
 
   function burst(x, y) {
     const n = 70 + Math.floor(Math.random() * 40);
@@ -821,9 +792,7 @@ function launchFireworks() {
     [.12,.18],[.88,.25],[.5,.08],[.35,.5],[.65,.45]
   ];
   spots.forEach(([rx, ry], i) => {
-    setTimeout(() => {
-      if (launching) burst(rx * canvas.width, ry * canvas.height);
-    }, i * 300);
+    setTimeout(() => { if (launching) burst(rx * canvas.width, ry * canvas.height); }, i * 300);
   });
   setTimeout(() => { launching = false; }, spots.length * 300 + 1200);
 
@@ -854,20 +823,11 @@ function launchFireworks() {
 function showHint() {
   document.getElementById('hintImg').src = PUZZLE_IMAGE;
   document.getElementById('hintModal').classList.add('show');
-  
-  // Track hint usage
-  if (typeof gtag !== 'undefined') {
-    gtag('event', 'hint_used', {
-      'event_category': 'Game',
-      'event_label': 'Lebaran Puzzle'
-    });
-  }
+  track('hint_used', { event_label: 'Lebaran Puzzle' });
 }
-
 function closeHint() {
   document.getElementById('hintModal').classList.remove('show');
 }
-
 (function () {
   const m = document.getElementById('hintModal');
   let drag = false, ox = 0, oy = 0;
