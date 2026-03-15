@@ -390,8 +390,6 @@ function mergeInto(aIdx, bIdx) {
 }
 
 function updateMergedCount() {
-  // Count pieces that are in groups of size >= 2
-  // A group is "correct" only if ALL members' relative offsets match col/row * PP
   let merged = 0;
   groups.forEach(g => {
     if (!g || g.members.length < 2) return;
@@ -399,23 +397,11 @@ function updateMergedCount() {
   });
   mergedTotal = merged;
 
-  // Count pieces in fully-correct relative arrangement
-  // (for completion: the whole puzzle must be one correct group of 36)
-  // We detect completion differently: one group with all 36 pieces
-  // AND all offsets correct (ox === col*PP - minCol*PP, etc.)
+  // Completion: any group that has all TOTAL pieces
+  // No need to verify arrangement — snap logic already guarantees
+  // pieces only join if correctly adjacent, so a group of 36 = solved
   const big = groups.find(g => g && g.members.length === TOTAL);
-  if (big) {
-    // Verify internal arrangement
-    const minOx = Math.min(...big.members.map(m => m.ox));
-    const minOy = Math.min(...big.members.map(m => m.oy));
-    const minC  = Math.min(...big.members.map(m => m.col));
-    const minR  = Math.min(...big.members.map(m => m.row));
-    const allOk = big.members.every(m =>
-      m.ox - minOx === (m.col - minC) * PP &&
-      m.oy - minOy === (m.row - minR) * PP
-    );
-    if (allOk) { setTimeout(finishPuzzle, 300); return; }
-  }
+  if (big) { setTimeout(finishPuzzle, 300); return; }
 
   const pct = (mergedTotal / TOTAL) * 100;
   document.getElementById('progressFill').style.width = pct + '%';
@@ -436,31 +422,37 @@ function updateMergedCount() {
 function trySnap(movedIdx) {
   if (!groups[movedIdx]) return;
   const mg = groups[movedIdx];
-  let merged = false;
 
   for (let i = 0; i < groups.length; i++) {
     if (i === movedIdx || !groups[i]) continue;
     const og = groups[i];
 
-    // For each pair of members (one from each group), check correct relative dist
+    // Only snap if the two pieces are DIRECTLY adjacent (touching edges)
+    // i.e. |colDiff| + |rowDiff| === 1  (no diagonals, no gaps)
     for (const mm of mg.members) {
       for (const om of og.members) {
-        // Correct canvas position of mm IF correctly aligned relative to om:
-        const expX = og.x + om.ox + (mm.col - om.col) * PP;
-        const expY = og.y + om.oy + (mm.row - om.row) * PP;
+        const colDiff = mm.col - om.col;
+        const rowDiff = mm.row - om.row;
+
+        // Must be exactly one step apart (cardinal direction only)
+        if (Math.abs(colDiff) + Math.abs(rowDiff) !== 1) continue;
+
+        // Expected canvas position of mm if correctly adjacent to om
+        const expX = og.x + om.ox + colDiff * PP;
+        const expY = og.y + om.oy + rowDiff * PP;
         const actX = mg.x + mm.ox;
         const actY = mg.y + mm.oy;
 
         const dx = actX - expX, dy = actY - expY;
         if (Math.hypot(dx, dy) < SNAP_DIST) {
-          // Snap mg to exact position
+          // Snap mg to exact correct position
           mg.x -= dx; mg.y -= dy;
           mg.el.style.left = mg.x + 'px';
           mg.el.style.top  = mg.y + 'px';
 
           // Merge mg into og
           mergeInto(i, movedIdx);
-          // Recurse: the enlarged og might snap to yet another group
+          // Recurse: enlarged og might snap to more groups
           trySnap(i);
           return;
         }
