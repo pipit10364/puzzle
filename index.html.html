@@ -22,12 +22,7 @@
   --bg:       #fdf6ff;
 }
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-html, body {
-  font-family:'Inclusive Sans',sans-serif;
-  background:var(--bg);
-  overflow:hidden; /* canvas handles its own panning */
-  width:100%; height:100%;
-}
+html, body { font-family:'Inclusive Sans',sans-serif; background:var(--bg); overflow:hidden; width:100%; height:100%; }
 
 /* ── SCREENS ── */
 .screen {
@@ -65,46 +60,63 @@ html, body {
 }
 .header h1 { font-size:18px; margin-bottom:2px; }
 .timer { font-size:38px; font-weight:700; color:var(--accent); letter-spacing:2px; line-height:1; }
-.progress-bar-wrap { margin:5px auto 0; max-width:240px; height:5px; background:rgba(255,255,255,0.2); border-radius:3px; overflow:hidden; }
-.progress-bar-fill { height:100%; background:var(--accent); border-radius:3px; width:0%; transition:width 0.3s; }
+.prog-wrap { margin:5px auto 0; max-width:240px; height:5px; background:rgba(255,255,255,0.2); border-radius:3px; overflow:hidden; }
+.prog-fill  { height:100%; background:var(--accent); border-radius:3px; width:0%; transition:width 0.3s; }
 .pieces-left { font-size:11px; color:rgba(255,255,255,0.7); margin-top:3px; }
 
-/* ── CANVAS AREA ── */
+/* ── CANVAS WRAP ── */
 #canvasWrap {
-  position:fixed;
-  /* top set by JS after header height measured */
-  left:0; right:0; bottom:0;
-  overflow:hidden;
+  position:fixed; left:0; right:0; bottom:0;
+  overflow:hidden; background:var(--bg);
   cursor:default;
-}
-#gameCanvas {
-  position:absolute;
-  top:0; left:0;
-  /* width/height set by JS — larger than viewport for panning */
+  /* top set by JS */
 }
 
-/* ── PIECE ELEMENTS (absolutely on canvas) ── */
-.piece {
+/* subtle dot-grid background so canvas feels like a table */
+#canvasWrap::before {
+  content:'';
+  position:absolute; inset:0;
+  background-image: radial-gradient(circle, rgba(114,78,145,0.12) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events:none; z-index:0;
+}
+
+#gameCanvas {
+  position:absolute; top:0; left:0;
+  /* size & transform set by JS */
+}
+
+/* ── GROUPS ── */
+.pgroup {
   position:absolute;
-  background-repeat:no-repeat;
   cursor:grab;
   touch-action:none;
   user-select:none; -webkit-user-select:none;
-  border-radius:3px;
-  box-shadow:0 2px 8px rgba(0,0,0,0.22);
-  transition:box-shadow .15s;
-  will-change:transform;
+  /* no overflow:hidden — pieces sit flush */
 }
-.piece:active { cursor:grabbing; }
-.piece.locked {
-  cursor:default;
-  box-shadow:none;
-  /* locked pieces sit together seamlessly */
+.pgroup:active { cursor:grabbing; }
+.pgroup.dragging { z-index:1000 !important; }
+
+/* ── PIECES inside group ── */
+.piece {
+  position:absolute;
+  background-repeat:no-repeat;
+  /* no border-radius — seamless when grouped */
 }
-.piece.dragging {
-  box-shadow:0 12px 32px rgba(0,0,0,0.45);
-  z-index:1000 !important;
-  opacity:0.92;
+/* single-piece groups get a subtle shadow + tiny radius */
+.pgroup[data-size="1"] .piece {
+  border-radius:4px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.25);
+}
+.pgroup.dragging[data-size="1"] .piece {
+  box-shadow: 0 10px 28px rgba(0,0,0,0.4);
+}
+/* multi-piece groups: subtle outline around the whole group */
+.pgroup[data-size]:not([data-size="1"]) {
+  box-shadow: 0 4px 18px rgba(114,78,145,0.3);
+}
+.pgroup.dragging:not([data-size="1"]) {
+  box-shadow: 0 12px 36px rgba(114,78,145,0.45);
 }
 
 /* ── HINT ── */
@@ -131,16 +143,16 @@ html, body {
 .hint-modal img { display:block; border-radius:8px; width:240px; max-width:80vw; }
 .hint-modal input[type=range] { width:100%; margin-top:8px; accent-color:var(--primary); }
 
-/* ── COLLECT BTN (appear mid-game) ── */
+/* ── COLLECT BTN ── */
 #collectBtn {
   position:fixed; bottom:22px; left:20px;
-  background:var(--primary); color:#fff;
-  padding:12px 20px; border:none; border-radius:50px;
-  font-size:14px; font-family:inherit; cursor:pointer;
-  box-shadow:0 6px 18px rgba(0,0,0,0.2); z-index:500;
-  transition:opacity .3s; display:none;
+  background:rgba(114,78,145,0.85); color:#fff;
+  padding:12px 18px; border:none; border-radius:50px;
+  font-size:13px; font-family:inherit; cursor:pointer;
+  box-shadow:0 4px 14px rgba(0,0,0,0.18); z-index:500;
+  transition:background .2s; backdrop-filter:blur(4px);
 }
-#collectBtn:hover { background:var(--emphasis); }
+#collectBtn:hover { background:var(--primary); }
 
 /* ── FIREWORK ── */
 #fwCanvas { position:fixed; inset:0; pointer-events:none; z-index:8999; }
@@ -154,9 +166,9 @@ html, body {
     <h2>🌙 Lebaran Puzzle Challenge ✨</h2>
     <p>Susun 36 puzzle pieces secepat mungkin! 🎉</p>
     <p style="font-size:13px;color:#999;">
-      Drag pieces bebas ke mana aja.<br>
-      Piece yang udah bener posisinya akan terkunci otomatis. 🔒<br>
-      Scroll/geser layar untuk navigasi area.
+      Drag pieces ke mana aja.<br>
+      Pieces yang bener akan <strong>melekat otomatis</strong> — dan kelompoknya bisa digeser bareng! 🔗<br>
+      Scroll/geser area kosong untuk navigasi.
     </p>
     <div style="background:#f0e6ff;border-radius:12px;padding:14px 16px;margin:14px 0;text-align:left;">
       <div style="font-size:13px;color:#724E91;margin-bottom:8px;" id="loadText">⏳ Memuat gambar…</div>
@@ -200,17 +212,17 @@ html, body {
 <div class="header" id="header">
   <h1>🌙 Lebaran Puzzle Challenge ✨</h1>
   <div class="timer" id="timer">00:00.0</div>
-  <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressFill"></div></div>
+  <div class="prog-wrap"><div class="prog-fill" id="progressFill"></div></div>
   <div class="pieces-left" id="piecesLeft">Susun semua 36 pieces!</div>
 </div>
 
-<!-- GAME CANVAS -->
+<!-- GAME -->
 <div id="canvasWrap">
   <div id="gameCanvas"></div>
 </div>
 
 <button class="hint-btn" onclick="showHint()">💡 Hint</button>
-<button id="collectBtn" onclick="collectPieces()" title="Kumpulkan pieces yang berserakan">🧹 Kumpulkan</button>
+<button id="collectBtn" onclick="collectPieces()">🧹 Kumpulkan</button>
 
 <script>
 // ══════════════════════════════════════════════════════
@@ -224,35 +236,51 @@ const IMAGES = [
   'https://raw.githubusercontent.com/pipit10364/CMON/main/CMON%202026%20(7).png',
   'https://raw.githubusercontent.com/pipit10364/CMON/main/CMON%202026%20(8).png'
 ];
-const GRID       = 6;
-const TOTAL      = GRID * GRID;
-const SNAP_DIST  = 28;   // px — how close to snap
-const CANVAS_W   = 2800; // virtual canvas width
-const CANVAS_H   = 2200; // virtual canvas height
+const GRID      = 6;
+const TOTAL     = GRID * GRID;  // 36
+const SNAP_DIST = 30;           // pixels — snap threshold
+const CW        = 3000;         // virtual canvas width
+const CH        = 2400;         // virtual canvas height
 
 // ══════════════════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════════════════
 let PUZZLE_IMAGE = '';
 let usedImages   = [];
-let piecePx      = 80;   // size of each piece (set on init)
-let pieces       = [];   // array of piece state objects
-let pieceEls     = [];   // array of DOM elements, index matches pieces[]
-let lockedGroup  = null; // { anchorX, anchorY } — the origin of locked pieces
-let lockedCount  = 0;
+let PP           = 80;   // piece pixel size, set on init
+
+/*
+  Group model:
+  groups[] = array of group objects
+  {
+    id,
+    x, y,          // canvas position of group top-left
+    members[],     // array of { row, col, offX, offY } — offX/Y = offset from group origin
+    el,            // DOM element (.pgroup)
+  }
+
+  Each piece belongs to exactly one group.
+  pieceToGroup[row*GRID+col] = groupId
+*/
+let groups       = [];
+let pieceToGroup = {};   // key: row*GRID+col, value: group index in groups[]
+let nextGroupId  = 0;
+let mergedCount  = 0;    // how many pieces are in multi-piece groups (proxy for "locked")
+let totalCorrect = 0;    // pieces in their final correct position
 
 let startTime     = null;
 let timerInterval = null;
 let audioCtx      = null;
 let musicStopped  = false;
 
-// Pan state
+// Pan
 let panX = 0, panY = 0;
-let isPanning = false;
-let panStart  = { x:0, y:0, px:0, py:0 };
+let panActive = false;
+let panStartX = 0, panStartY = 0, panOrigX = 0, panOrigY = 0;
 
-// Drag state
-let dragInfo = null;
+// Drag
+let dragInfo = null; // { groupIdx, startGX, startGY, pointerStartX, pointerStartY }
+let maxZ = 100;
 
 // ══════════════════════════════════════════════════════
 //  IMAGE
@@ -261,21 +289,20 @@ function pickImage() {
   if (usedImages.length >= IMAGES.length) usedImages = [];
   const pool = IMAGES.filter(i => !usedImages.includes(i));
   const pick = pool[Math.floor(Math.random() * pool.length)];
-  usedImages.push(pick);
-  return pick;
+  usedImages.push(pick); return pick;
 }
 function preloadImage(url) {
   return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
+    const img = new Image(); img.crossOrigin = 'anonymous';
     let pct = 0;
     const bar  = document.getElementById('loadBar');
     const tick = setInterval(() => { pct = Math.min(pct + Math.random()*13, 88); if(bar) bar.style.width=pct+'%'; }, 180);
-    img.onload  = () => { clearInterval(tick); if(bar) bar.style.width='100%'; setTimeout(resolve, 200); };
+    img.onload  = () => { clearInterval(tick); if(bar) bar.style.width='100%'; setTimeout(resolve,200); };
     img.onerror = () => { clearInterval(tick); reject(); };
     img.src = url;
   });
 }
+
 PUZZLE_IMAGE = pickImage();
 preloadImage(PUZZLE_IMAGE)
   .catch(() => { PUZZLE_IMAGE = IMAGES[0]; return preloadImage(PUZZLE_IMAGE); })
@@ -284,12 +311,10 @@ preloadImage(PUZZLE_IMAGE)
     const btn = document.getElementById('startBtn');
     btn.disabled = false; btn.textContent = '🚀 Mulai!';
   })
-  .catch(() => {
-    document.getElementById('loadText').textContent = '❌ Gagal memuat. Cek koneksi.';
-  });
+  .catch(() => { document.getElementById('loadText').textContent = '❌ Gagal memuat.'; });
 
 // ══════════════════════════════════════════════════════
-//  BG HELPER
+//  BG
 // ══════════════════════════════════════════════════════
 function applyBg(el, row, col, px) {
   el.style.backgroundImage    = `url('${PUZZLE_IMAGE}')`;
@@ -301,15 +326,11 @@ function applyBg(el, row, col, px) {
 // ══════════════════════════════════════════════════════
 //  AUDIO
 // ══════════════════════════════════════════════════════
-function initAudio() {
-  if (audioCtx) return;
-  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-}
+function initAudio() { if (audioCtx) return; audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }
 function synthNote(f,type,t,dur,vol) {
   const o=audioCtx.createOscillator(),g=audioCtx.createGain();
   o.type=type;o.frequency.value=f;o.connect(g);g.connect(audioCtx.destination);
-  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+0.04);
-  g.gain.linearRampToValueAtTime(0,t+dur-0.04);o.start(t);o.stop(t+dur);
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+0.04);g.gain.linearRampToValueAtTime(0,t+dur-0.04);o.start(t);o.stop(t+dur);
 }
 function drumHit(t,decay,vol) {
   const len=Math.ceil(audioCtx.sampleRate*decay*5),buf=audioCtx.createBuffer(1,len,audioCtx.sampleRate),d=buf.getChannelData(0);
@@ -318,355 +339,403 @@ function drumHit(t,decay,vol) {
   s.buffer=buf;g.gain.value=vol;s.connect(g);g.connect(audioCtx.destination);s.start(t);
 }
 function playLebaranMusic() {
-  if (!audioCtx||musicStopped) return;
+  if(!audioCtx||musicStopped) return;
   const t=audioCtx.currentTime;
   [523,587,659,698,783,698,659,587].forEach((f,i)=>synthNote(f,'triangle',t+i*0.38,0.32,0.06));
   [261,293,261,329].forEach((f,i)=>synthNote(f,'sine',t+i*0.76,0.65,0.04));
   [0,0.76,1.52,2.28,2.66].forEach(o=>drumHit(t+o,0.04,0.18));
-  if (!musicStopped) window._mLoop=setTimeout(playLebaranMusic,8*0.38*1000);
+  if(!musicStopped) window._mLoop=setTimeout(playLebaranMusic,8*0.38*1000);
 }
 function stopMusic() { musicStopped=true; clearTimeout(window._mLoop); }
 function playVictorySound() {
-  if (!audioCtx) return;
-  const t=audioCtx.currentTime;
+  if(!audioCtx) return; const t=audioCtx.currentTime;
   [523,659,783,1046].forEach((f,i)=>synthNote(f,'square',t+i*0.18,0.42,0.08));
   [0.8,1.05,1.3,1.55,1.8,1.95,2.1,2.25,2.4].forEach(o=>drumHit(t+o,0.07,0.45));
   synthNote(1318,'sine',t+0.8,0.6,0.06);
 }
 
 // ══════════════════════════════════════════════════════
-//  INIT PUZZLE
+//  GROUP HELPERS
+// ══════════════════════════════════════════════════════
+function getGroupByPiece(row, col) {
+  return groups[pieceToGroup[row * GRID + col]];
+}
+
+function rebuildGroupEl(group) {
+  // Recalculate the bounding box of all members,
+  // reposition pieces inside the DOM group element.
+  // members[].offX/Y = offset of each piece's top-left from the group's origin (x,y)
+  // group.x, group.y = canvas coords of the group's top-left bounding corner
+  const el = group.el;
+  if (!el) return;
+
+  // Update CSS size to wrap all pieces
+  let maxW = 0, maxH = 0;
+  group.members.forEach(m => {
+    maxW = Math.max(maxW, m.offX + PP);
+    maxH = Math.max(maxH, m.offY + PP);
+  });
+  el.style.width  = maxW + 'px';
+  el.style.height = maxH + 'px';
+  el.dataset.size = group.members.length;
+
+  // Position each piece within the group el
+  group.members.forEach(m => {
+    const pieceEl = el.querySelector(`[data-row="${m.row}"][data-col="${m.col}"]`);
+    if (pieceEl) {
+      pieceEl.style.left = m.offX + 'px';
+      pieceEl.style.top  = m.offY + 'px';
+    }
+  });
+
+  // Position group el on canvas
+  el.style.left = group.x + 'px';
+  el.style.top  = group.y + 'px';
+}
+
+function createSingleGroup(row, col, canvasX, canvasY) {
+  const cvs = document.getElementById('gameCanvas');
+  const id  = nextGroupId++;
+
+  const pieceEl = document.createElement('div');
+  pieceEl.className = 'piece';
+  pieceEl.dataset.row = row;
+  pieceEl.dataset.col = col;
+  pieceEl.style.width  = PP + 'px';
+  pieceEl.style.height = PP + 'px';
+  pieceEl.style.left = '0px';
+  pieceEl.style.top  = '0px';
+  applyBg(pieceEl, row, col, PP);
+
+  const groupEl = document.createElement('div');
+  groupEl.className = 'pgroup';
+  groupEl.dataset.groupId = id;
+  groupEl.dataset.size = 1;
+  groupEl.style.width  = PP + 'px';
+  groupEl.style.height = PP + 'px';
+  groupEl.style.left   = canvasX + 'px';
+  groupEl.style.top    = canvasY + 'px';
+  groupEl.style.zIndex = maxZ++;
+  groupEl.appendChild(pieceEl);
+
+  groupEl.addEventListener('pointerdown', onGroupDown);
+  cvs.appendChild(groupEl);
+
+  const group = {
+    id,
+    x: canvasX, y: canvasY,
+    members: [{ row, col, offX: 0, offY: 0 }],
+    el: groupEl,
+    idx: groups.length
+  };
+  groups.push(group);
+  pieceToGroup[row * GRID + col] = group.idx;
+  return group;
+}
+
+// Merge groupB INTO groupA, then remove groupB from DOM/array
+function mergeGroups(groupA, groupB) {
+  // offset of B's origin relative to A's origin
+  const relX = groupB.x - groupA.x;
+  const relY = groupB.y - groupA.y;
+
+  // Move all pieces from B into A's DOM element with adjusted offsets
+  groupB.members.forEach(m => {
+    const oldEl = groupB.el.querySelector(`[data-row="${m.row}"][data-col="${m.col}"]`);
+    if (oldEl) groupB.el.removeChild(oldEl);
+    const newOffX = m.offX + relX;
+    const newOffY = m.offY + relY;
+    oldEl.style.left = newOffX + 'px';
+    oldEl.style.top  = newOffY + 'px';
+    groupA.el.appendChild(oldEl);
+    groupA.members.push({ row: m.row, col: m.col, offX: newOffX, offY: newOffY });
+    pieceToGroup[m.row * GRID + m.col] = groupA.idx;
+  });
+
+  // Remove B's element
+  groupB.el.removeEventListener('pointerdown', onGroupDown);
+  groupB.el.remove();
+  // Mark B as merged (null it out but keep index stable)
+  groups[groupB.idx] = null;
+
+  // Update size attribute
+  groupA.el.dataset.size = groupA.members.length;
+
+  // Refit bounding box
+  rebuildGroupEl(groupA);
+  totalCorrect = countCorrect();
+  updateProgress();
+  if (totalCorrect === TOTAL) setTimeout(finishPuzzle, 300);
+}
+
+function countCorrect() {
+  // A piece is "correct" if it's in a group where ALL members are correctly
+  // positioned relative to each other (i.e., their offX/Y match col*PP and row*PP
+  // relative to the group's own internal origin).
+  // We determine this by checking if for every member, offX = col * PP - minCol*PP etc.
+  let count = 0;
+  groups.forEach(g => {
+    if (!g) return;
+    // Find min offX and minOffY
+    const minOX = Math.min(...g.members.map(m => m.offX));
+    const minOY = Math.min(...g.members.map(m => m.offY));
+    const minCol = Math.min(...g.members.map(m => m.col));
+    const minRow = Math.min(...g.members.map(m => m.row));
+    const allCorrect = g.members.every(m =>
+      m.offX - minOX === (m.col - minCol) * PP &&
+      m.offY - minOY === (m.row - minRow) * PP
+    );
+    if (allCorrect) count += g.members.length;
+  });
+  return count;
+}
+
+// ══════════════════════════════════════════════════════
+//  SNAP CHECK — after dropping a group, try to merge
+//  with any adjacent correctly-aligned group
+// ══════════════════════════════════════════════════════
+function trySnapGroup(movedGroupIdx) {
+  const mg = groups[movedGroupIdx];
+  if (!mg) return;
+
+  for (let i = 0; i < groups.length; i++) {
+    if (i === movedGroupIdx || !groups[i]) continue;
+    const og = groups[i];
+
+    // Check each member of mg against each member of og
+    for (const mm of mg.members) {
+      for (const om of og.members) {
+        // Expected canvas position of mm if they were correctly aligned relative to om:
+        const expectedMX = (og.x + om.offX) + (mm.col - om.col) * PP;
+        const expectedMY = (og.y + om.offY) + (mm.row - om.row) * PP;
+        const actualMX   = mg.x + mm.offX;
+        const actualMY   = mg.y + mm.offY;
+
+        const dx = actualMX - expectedMX;
+        const dy = actualMY - expectedMY;
+
+        if (Math.sqrt(dx*dx + dy*dy) < SNAP_DIST) {
+          // Snap mg to the correct position relative to og
+          mg.x -= dx;
+          mg.y -= dy;
+          mg.el.style.left = mg.x + 'px';
+          mg.el.style.top  = mg.y + 'px';
+
+          // Merge mg into og (og is the "base" group)
+          mergeGroups(og, mg);
+          // After merge, try snapping the enlarged og again
+          trySnapGroup(og.idx);
+          return;
+        }
+      }
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  INIT
 // ══════════════════════════════════════════════════════
 function initPuzzle() {
-  lockedCount  = 0;
-  lockedGroup  = null;
+  groups       = [];
+  pieceToGroup = {};
+  nextGroupId  = 0;
+  mergedCount  = 0;
+  totalCorrect = 0;
   dragInfo     = null;
-  pieces       = [];
-  pieceEls     = [];
+  maxZ         = 100;
 
-  // Setup canvas wrap
-  const header  = document.getElementById('header');
-  const hdrH    = header.offsetHeight;
-  const wrap    = document.getElementById('canvasWrap');
+  const header = document.getElementById('header');
+  const hdrH   = header.offsetHeight;
+  const wrap   = document.getElementById('canvasWrap');
   wrap.style.top = hdrH + 'px';
 
   const vw = window.innerWidth;
   const vh = window.innerHeight - hdrH;
 
-  // Piece size: aim so full puzzle = ~60% of shorter viewport dim
-  const targetPuzzleSz = Math.min(vw, vh) * 0.62;
-  piecePx = Math.max(48, Math.floor(targetPuzzleSz / GRID));
+  // Piece size
+  PP = Math.max(46, Math.floor(Math.min(vw, vh) * 0.60 / GRID));
 
-  // Canvas is large virtual space
   const cvs = document.getElementById('gameCanvas');
-  cvs.style.width  = CANVAS_W + 'px';
-  cvs.style.height = CANVAS_H + 'px';
-  cvs.innerHTML    = '';
+  cvs.innerHTML = '';
+  cvs.style.width  = CW + 'px';
+  cvs.style.height = CH + 'px';
 
-  // Build pieces array & scatter
+  // Scatter all pieces as individual single-groups
   const all = [];
   for (let r = 0; r < GRID; r++)
     for (let c = 0; c < GRID; c++)
       all.push({ r, c });
   shuffleArr(all);
 
-  // Scatter randomly across canvas, leaving center-ish clear initially
-  all.forEach((p, idx) => {
-    // Random position across full canvas
-    const x = 60 + Math.random() * (CANVAS_W - piecePx - 120);
-    const y = 60 + Math.random() * (CANVAS_H - piecePx - 120);
-
-    const state = { row: p.r, col: p.c, x, y, locked: false, zIndex: idx + 1 };
-    pieces.push(state);
-
-    const el = document.createElement('div');
-    el.className = 'piece';
-    el.dataset.idx = idx;
-    el.style.width  = piecePx + 'px';
-    el.style.height = piecePx + 'px';
-    el.style.left   = x + 'px';
-    el.style.top    = y + 'px';
-    el.style.zIndex = state.zIndex;
-    applyBg(el, p.r, p.c, piecePx);
-    el.addEventListener('pointerdown', onPieceDown);
-    cvs.appendChild(el);
-    pieceEls.push(el);
+  all.forEach(p => {
+    const x = 80 + Math.random() * (CW - PP - 160);
+    const y = 80 + Math.random() * (CH - PP - 160);
+    createSingleGroup(p.r, p.c, x, y);
   });
 
-  // Start pan centered on where pieces are mostly gathered
-  panX = (vw  - CANVAS_W) / 2;
-  panY = (vh  - CANVAS_H) / 2;
+  // Start viewport centered
+  panX = (vw  - CW) / 2;
+  panY = (vh  - CH) / 2;
   applyPan();
 
-  // Update UI
   document.getElementById('progressFill').style.width = '0%';
   document.getElementById('piecesLeft').textContent = `Susun semua ${TOTAL} pieces!`;
-  document.getElementById('collectBtn').style.display = 'block';
 }
 
 // ══════════════════════════════════════════════════════
-//  PAN (two-finger / background drag)
+//  PAN
 // ══════════════════════════════════════════════════════
 function applyPan() {
   const wrap = document.getElementById('canvasWrap');
-  const vw   = wrap.offsetWidth;
-  const vh   = wrap.offsetHeight;
-  // Clamp pan so canvas doesn't go too far off screen
-  const minX = vw  - CANVAS_W - 100;
-  const minY = vh  - CANVAS_H - 100;
-  panX = Math.min(100, Math.max(minX, panX));
-  panY = Math.min(100, Math.max(minY, panY));
+  const vw = wrap.offsetWidth, vh = wrap.offsetHeight;
+  panX = Math.min(120, Math.max(vw - CW - 120, panX));
+  panY = Math.min(120, Math.max(vh - CH - 120, panY));
   document.getElementById('gameCanvas').style.transform = `translate(${panX}px,${panY}px)`;
 }
 
-// Background pan listeners
-const canvasWrap = document.getElementById('canvasWrap');
-let panPointers = new Map();
-
-canvasWrap.addEventListener('pointerdown', e => {
-  if (e.target !== document.getElementById('gameCanvas') && !e.target.classList.contains('piece')) return;
-  if (e.target.classList.contains('piece')) return; // piece handles its own
-  panPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-  isPanning = true;
-  panStart = { x: e.clientX, y: e.clientY, px: panX, py: panY };
-  canvasWrap.setPointerCapture(e.pointerId);
+const wrap = document.getElementById('canvasWrap');
+let panPtrs = new Map();
+wrap.addEventListener('pointerdown', e => {
+  if (e.target.closest('.pgroup')) return; // let groups handle
+  panPtrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  panActive = true;
+  panStartX = e.clientX; panStartY = e.clientY;
+  panOrigX  = panX;      panOrigY  = panY;
+  wrap.setPointerCapture(e.pointerId);
 });
-canvasWrap.addEventListener('pointermove', e => {
-  if (!isPanning || !panPointers.has(e.pointerId)) return;
-  panX = panStart.px + (e.clientX - panStart.x);
-  panY = panStart.py + (e.clientY - panStart.y);
+wrap.addEventListener('pointermove', e => {
+  if (!panActive || !panPtrs.has(e.pointerId)) return;
+  panX = panOrigX + (e.clientX - panStartX);
+  panY = panOrigY + (e.clientY - panStartY);
   applyPan();
 });
-canvasWrap.addEventListener('pointerup',     e => { panPointers.delete(e.pointerId); if (!panPointers.size) isPanning=false; });
-canvasWrap.addEventListener('pointercancel', e => { panPointers.delete(e.pointerId); if (!panPointers.size) isPanning=false; });
-
-// Wheel to pan
-canvasWrap.addEventListener('wheel', e => {
-  e.preventDefault();
-  panX -= e.deltaX;
-  panY -= e.deltaY;
-  applyPan();
-}, { passive: false });
+wrap.addEventListener('pointerup',     e => { panPtrs.delete(e.pointerId); if(!panPtrs.size) panActive=false; });
+wrap.addEventListener('pointercancel', e => { panPtrs.delete(e.pointerId); if(!panPtrs.size) panActive=false; });
+wrap.addEventListener('wheel', e => { e.preventDefault(); panX-=e.deltaX; panY-=e.deltaY; applyPan(); }, { passive:false });
 
 // ══════════════════════════════════════════════════════
-//  PIECE DRAG
+//  GROUP DRAG
 // ══════════════════════════════════════════════════════
-let maxZ = TOTAL + 1;
-
-function onPieceDown(e) {
+function onGroupDown(e) {
   if (e.button && e.button !== 0) return;
-  const el  = e.currentTarget;
-  const idx = +el.dataset.idx;
-  const p   = pieces[idx];
+  e.preventDefault(); e.stopPropagation();
 
-  if (p.locked) return; // locked pieces can't be moved
-
-  e.preventDefault();
-  e.stopPropagation();
+  const el       = e.currentTarget;
+  const id       = +el.dataset.groupId;
+  const groupIdx = groups.findIndex(g => g && g.id === id);
+  if (groupIdx < 0) return;
+  const g = groups[groupIdx];
 
   // Bring to front
-  maxZ++;
-  p.zIndex = maxZ;
-  el.style.zIndex = maxZ;
-
-  const canvasRect = document.getElementById('gameCanvas').getBoundingClientRect();
-  const startCanvasX = e.clientX - canvasRect.left;
-  const startCanvasY = e.clientY - canvasRect.top;
-  const offsetX = startCanvasX - p.x;
-  const offsetY = startCanvasY - p.y;
-
+  el.style.zIndex = ++maxZ;
   el.classList.add('dragging');
 
-  dragInfo = { idx, el, offsetX, offsetY };
-  el.setPointerCapture(e.pointerId);
-  el.addEventListener('pointermove',   onPieceDragMove);
-  el.addEventListener('pointerup',     onPieceDragUp);
-  el.addEventListener('pointercancel', onPieceDragCancel);
-}
-
-function onPieceDragMove(e) {
-  if (!dragInfo) return;
-  e.preventDefault();
-  const { idx, el, offsetX, offsetY } = dragInfo;
   const canvasRect = document.getElementById('gameCanvas').getBoundingClientRect();
-  const newX = e.clientX - canvasRect.left - offsetX;
-  const newY = e.clientY - canvasRect.top  - offsetY;
-  pieces[idx].x = newX;
-  pieces[idx].y = newY;
-  el.style.left = newX + 'px';
-  el.style.top  = newY + 'px';
+  dragInfo = {
+    groupIdx,
+    startGX:  g.x,
+    startGY:  g.y,
+    ptrStartX: e.clientX - canvasRect.left,
+    ptrStartY: e.clientY - canvasRect.top,
+    canvasRect
+  };
+
+  el.setPointerCapture(e.pointerId);
+  el.addEventListener('pointermove',   onGroupMove);
+  el.addEventListener('pointerup',     onGroupUp);
+  el.addEventListener('pointercancel', onGroupCancel);
 }
 
-function onPieceDragUp(e) {
+function onGroupMove(e) {
   if (!dragInfo) return;
   e.preventDefault();
-  const { idx, el } = dragInfo;
-  el.classList.remove('dragging');
-  endPieceDrag();
-  trySnap(idx);
+  const { groupIdx, startGX, startGY, ptrStartX, ptrStartY } = dragInfo;
+  const g = groups[groupIdx];
+  if (!g) return;
+  const canvasRect = document.getElementById('gameCanvas').getBoundingClientRect();
+  const cx = e.clientX - canvasRect.left;
+  const cy = e.clientY - canvasRect.top;
+  g.x = startGX + (cx - ptrStartX);
+  g.y = startGY + (cy - ptrStartY);
+  g.el.style.left = g.x + 'px';
+  g.el.style.top  = g.y + 'px';
 }
-function onPieceDragCancel(e) {
+
+function onGroupUp(e) {
   if (!dragInfo) return;
-  dragInfo.el.classList.remove('dragging');
-  endPieceDrag();
+  e.preventDefault();
+  const { groupIdx } = dragInfo;
+  const g = groups[groupIdx];
+  if (g) g.el.classList.remove('dragging');
+  endGroupDrag();
+  trySnapGroup(groupIdx);
 }
-function endPieceDrag() {
+function onGroupCancel(e) {
   if (!dragInfo) return;
-  dragInfo.el.removeEventListener('pointermove',   onPieceDragMove);
-  dragInfo.el.removeEventListener('pointerup',     onPieceDragUp);
-  dragInfo.el.removeEventListener('pointercancel', onPieceDragCancel);
+  const g = groups[dragInfo.groupIdx];
+  if (g) g.el.classList.remove('dragging');
+  endGroupDrag();
+}
+function endGroupDrag() {
+  if (!dragInfo) return;
+  const g = groups[dragInfo.groupIdx];
+  if (g) {
+    g.el.removeEventListener('pointermove',   onGroupMove);
+    g.el.removeEventListener('pointerup',     onGroupUp);
+    g.el.removeEventListener('pointercancel', onGroupCancel);
+  }
   dragInfo = null;
-}
-
-// ══════════════════════════════════════════════════════
-//  SNAP LOGIC
-//  A piece "snaps" to the locked group if it's close enough
-//  to its correct position relative to any locked piece.
-//  First piece to be placed anywhere becomes the anchor.
-// ══════════════════════════════════════════════════════
-function trySnap(idx) {
-  const p = pieces[idx];
-
-  if (lockedGroup === null) {
-    // No anchor yet — this piece becomes the anchor itself.
-    // But don't lock it yet; it only locks when it correctly
-    // aligns with another piece. So just check if it's close
-    // to any OTHER unlocked piece and if they'd be correct neighbors.
-    checkPairSnap(idx);
-    return;
-  }
-
-  // Locked group exists — check if this piece is close to its correct slot
-  // relative to the locked group's anchor
-  const correctX = lockedGroup.anchorX + p.col * piecePx;
-  const correctY = lockedGroup.anchorY + p.row * piecePx;
-  const dx = p.x - correctX;
-  const dy = p.y - correctY;
-
-  if (Math.sqrt(dx*dx + dy*dy) < SNAP_DIST) {
-    lockPiece(idx, correctX, correctY);
-  }
-}
-
-function checkPairSnap(movedIdx) {
-  // Check if the moved piece is close to being correctly adjacent to any other piece
-  const mp = pieces[movedIdx];
-
-  for (let i = 0; i < pieces.length; i++) {
-    if (i === movedIdx) continue;
-    const op = pieces[i];
-
-    // What would be the correct relative offset between mp and op?
-    const expectedDX = (mp.col - op.col) * piecePx;
-    const expectedDY = (mp.row - op.row) * piecePx;
-
-    const actualDX = mp.x - op.x;
-    const actualDY = mp.y - op.y;
-
-    const errX = actualDX - expectedDX;
-    const errY = actualDY - expectedDY;
-    const err  = Math.sqrt(errX*errX + errY*errY);
-
-    if (err < SNAP_DIST) {
-      // They're correctly positioned relative to each other!
-      // Establish locked group anchor based on op's position
-      const anchorX = op.x - op.col * piecePx;
-      const anchorY = op.y - op.row * piecePx;
-      lockedGroup = { anchorX, anchorY };
-
-      // Lock both
-      lockPiece(i,       anchorX + op.col * piecePx,  anchorY + op.row * piecePx);
-      lockPiece(movedIdx, anchorX + mp.col * piecePx, anchorY + mp.row * piecePx);
-
-      // Now check all other unlocked pieces against the new anchor
-      snapAllToGroup();
-      return;
-    }
-  }
-}
-
-function snapAllToGroup() {
-  if (!lockedGroup) return;
-  let changed = true;
-  while (changed) {
-    changed = false;
-    for (let i = 0; i < pieces.length; i++) {
-      if (pieces[i].locked) continue;
-      const p = pieces[i];
-      const cx = lockedGroup.anchorX + p.col * piecePx;
-      const cy = lockedGroup.anchorY + p.row * piecePx;
-      const dx = p.x - cx, dy = p.y - cy;
-      if (Math.sqrt(dx*dx + dy*dy) < SNAP_DIST) {
-        lockPiece(i, cx, cy);
-        changed = true;
-      }
-    }
-  }
-}
-
-function lockPiece(idx, x, y) {
-  const p  = pieces[idx];
-  const el = pieceEls[idx];
-  if (p.locked) return;
-  p.locked = true;
-  p.x = x; p.y = y;
-  el.style.left      = x + 'px';
-  el.style.top       = y + 'px';
-  el.style.zIndex    = 5; // locked pieces sit below free pieces
-  el.style.boxShadow = 'none';
-  el.style.borderRadius = '0';
-  el.classList.add('locked');
-  el.removeEventListener('pointerdown', onPieceDown);
-  lockedCount++;
-  updateProgress();
-  if (lockedCount === TOTAL) finishPuzzle();
 }
 
 // ══════════════════════════════════════════════════════
 //  PROGRESS
 // ══════════════════════════════════════════════════════
 function updateProgress() {
-  const pct = (lockedCount / TOTAL) * 100;
+  const pct = (totalCorrect / TOTAL) * 100;
   document.getElementById('progressFill').style.width = pct + '%';
-  const rem = TOTAL - lockedCount;
-  document.getElementById('piecesLeft').textContent =
-    lockedCount === TOTAL
-      ? '✅ Semua pas! Selesai!'
-      : `${lockedCount} terkunci · ${rem} tersisa`;
+  if (totalCorrect === TOTAL) {
+    document.getElementById('piecesLeft').textContent = '✅ Semua pas! Selesai!';
+  } else {
+    const groupCount = groups.filter(g => g && g.members.length > 1).length;
+    document.getElementById('piecesLeft').textContent =
+      totalCorrect > 0
+        ? `${totalCorrect} tersambung · ${TOTAL - totalCorrect} tersisa · ${groupCount} kelompok`
+        : `Susun semua ${TOTAL} pieces!`;
+  }
 }
 
 // ══════════════════════════════════════════════════════
-//  COLLECT — bring scattered pieces near locked group
+//  COLLECT
 // ══════════════════════════════════════════════════════
 function collectPieces() {
-  const unlocked = pieces.filter(p => !p.locked);
-  if (!unlocked.length) return;
-
-  // Find center of locked group (or canvas center)
-  let cx = CANVAS_W / 2, cy = CANVAS_H / 2;
-  if (lockedGroup) {
-    cx = lockedGroup.anchorX + (GRID * piecePx) / 2;
-    cy = lockedGroup.anchorY + (GRID * piecePx) / 2;
+  // Find the biggest group, center viewport on it, scatter singles nearby
+  const biggest = groups.filter(Boolean).sort((a,b) => b.members.length - a.members.length)[0];
+  let cx = CW/2, cy = CH/2;
+  if (biggest) {
+    cx = biggest.x + biggest.el.offsetWidth  / 2;
+    cy = biggest.y + biggest.el.offsetHeight / 2;
   }
-
-  // Scatter unlocked pieces in a ring around the locked group
-  const radius = GRID * piecePx * 0.85;
-  unlocked.forEach((p, i) => {
-    const angle = (i / unlocked.length) * Math.PI * 2;
-    const idx = pieces.indexOf(p);
-    const nx  = cx + Math.cos(angle) * radius - piecePx / 2;
-    const ny  = cy + Math.sin(angle) * radius - piecePx / 2;
-    p.x = nx; p.y = ny;
-    pieceEls[idx].style.left = nx + 'px';
-    pieceEls[idx].style.top  = ny + 'px';
+  const radius = Math.max(PP * GRID, 320);
+  const singles = groups.filter(g => g && g.members.length === 1);
+  singles.forEach((g, i) => {
+    const angle = (i / singles.length) * Math.PI * 2;
+    g.x = cx + Math.cos(angle) * radius - PP/2;
+    g.y = cy + Math.sin(angle) * radius - PP/2;
+    g.el.style.left = g.x + 'px';
+    g.el.style.top  = g.y + 'px';
   });
-
-  // Pan to show the area
-  const wrap = document.getElementById('canvasWrap');
-  const vw   = wrap.offsetWidth, vh = wrap.offsetHeight;
-  panX = vw/2 - cx;
-  panY = vh/2 - cy;
+  const vw = document.getElementById('canvasWrap').offsetWidth;
+  const vh = document.getElementById('canvasWrap').offsetHeight;
+  panX = vw/2 - cx; panY = vh/2 - cy;
   applyPan();
+}
+
+// ══════════════════════════════════════════════════════
+//  SHUFFLE
+// ══════════════════════════════════════════════════════
+function shuffleArr(arr) {
+  for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}
+  return arr;
 }
 
 // ══════════════════════════════════════════════════════
@@ -675,19 +744,10 @@ function collectPieces() {
 function startTimer() {
   startTime = Date.now();
   timerInterval = setInterval(() => {
-    const e = (Date.now()-startTime)/1000;
-    const m = Math.floor(e/60);
-    const s = (e%60).toFixed(1).padStart(4,'0');
+    const e=(Date.now()-startTime)/1000, m=Math.floor(e/60);
+    const s=(e%60).toFixed(1).padStart(4,'0');
     document.getElementById('timer').textContent = String(m).padStart(2,'0')+':'+s;
   }, 100);
-}
-
-// ══════════════════════════════════════════════════════
-//  SHUFFLE
-// ══════════════════════════════════════════════════════
-function shuffleArr(arr) {
-  for (let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}
-  return arr;
 }
 
 // ══════════════════════════════════════════════════════
@@ -696,56 +756,44 @@ function shuffleArr(arr) {
 function startPuzzle() {
   initAudio();
   document.getElementById('startScreen').classList.add('hidden');
-  initPuzzle();
-  startTimer();
-  musicStopped = false;
-  setTimeout(playLebaranMusic, 150);
-  if (typeof gtag!=='undefined') gtag('event','puzzle_started',{event_category:'Game',event_label:'Lebaran'});
+  initPuzzle(); startTimer();
+  musicStopped=false; setTimeout(playLebaranMusic,150);
+  if(typeof gtag!=='undefined') gtag('event','puzzle_started',{event_category:'Game',event_label:'Lebaran'});
 }
 
 function restartGame() {
   clearInterval(timerInterval); stopMusic();
   document.getElementById('victoryScreen').classList.add('hidden');
-  document.getElementById('timer').textContent = '00:00.0';
+  document.getElementById('timer').textContent='00:00.0';
   PUZZLE_IMAGE = pickImage();
   preloadImage(PUZZLE_IMAGE)
     .catch(()=>{ PUZZLE_IMAGE=IMAGES[0]; return preloadImage(PUZZLE_IMAGE); })
     .finally(()=>{
       initPuzzle(); startTimer();
       musicStopped=false; setTimeout(playLebaranMusic,150);
-      if (typeof gtag!=='undefined') gtag('event','puzzle_restarted',{event_category:'Game',event_label:'Lebaran'});
     });
 }
 
 function finishPuzzle() {
   clearInterval(timerInterval); stopMusic();
-  document.getElementById('collectBtn').style.display = 'none';
-  const elapsed = ((Date.now()-startTime)/1000).toFixed(1);
-  document.getElementById('finalTime').textContent = '⏱ ' + elapsed + ' detik';
-
-  const canvas = document.getElementById('solvedCanvas');
-  const img = new Image();
+  const elapsed=((Date.now()-startTime)/1000).toFixed(1);
+  document.getElementById('finalTime').textContent='⏱ '+elapsed+' detik';
+  const canvas=document.getElementById('solvedCanvas'), img=new Image();
   img.crossOrigin='anonymous';
   img.onload=()=>{ canvas.width=img.naturalWidth; canvas.height=img.naturalHeight; canvas.getContext('2d').drawImage(img,0,0); };
-  img.src = PUZZLE_IMAGE;
-
-  setTimeout(()=>{
-    document.getElementById('victoryScreen').classList.remove('hidden');
-    document.getElementById('victoryScreen').scrollTop = 0;
-    launchFireworks(); playVictorySound();
-  }, 600);
-  if (typeof gtag!=='undefined') gtag('event','puzzle_completed',{event_category:'Game',event_label:'Lebaran',value:parseFloat(elapsed)});
+  img.src=PUZZLE_IMAGE;
+  document.getElementById('victoryScreen').classList.remove('hidden');
+  document.getElementById('victoryScreen').scrollTop=0;
+  launchFireworks(); playVictorySound();
+  if(typeof gtag!=='undefined') gtag('event','puzzle_completed',{event_category:'Game',event_label:'Lebaran',value:parseFloat(elapsed)});
 }
 
 function downloadImage() {
-  fetch(PUZZLE_IMAGE)
-    .then(r=>r.blob())
-    .then(blob=>{
-      const a=document.createElement('a');
-      a.href=URL.createObjectURL(blob); a.download='lebaran_puzzle.png'; a.click();
-      setTimeout(()=>URL.revokeObjectURL(a.href),5000);
-    })
-    .catch(()=>window.open(PUZZLE_IMAGE,'_blank'));
+  fetch(PUZZLE_IMAGE).then(r=>r.blob()).then(blob=>{
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download='lebaran_puzzle.png'; a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+  }).catch(()=>window.open(PUZZLE_IMAGE,'_blank'));
 }
 
 // ══════════════════════════════════════════════════════
@@ -758,9 +806,9 @@ function launchFireworks() {
   const colors=['#724E91','#ff7728','#f2c94c','#fff','#e74c3c','#2ecc71','#3498db','#fd79a8'];
   let parts=[],running=true;
   function burst(x,y){for(let i=0;i<80;i++){const a=Math.random()*Math.PI*2,sp=2+Math.random()*7;parts.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,alpha:1,decay:0.01+Math.random()*0.012,color:colors[Math.floor(Math.random()*colors.length)],size:2.5+Math.random()*4});}}
-  const spots=[[.25,.28],[.75,.22],[.5,.14],[.15,.45],[.85,.38],[.4,.18],[.6,.3],[.3,.35],[.7,.12],[.5,.38],[.12,.18],[.88,.25],[.5,.08],[.35,.5],[.65,.45]];
-  spots.forEach(([rx,ry],i)=>setTimeout(()=>{if(running)burst(rx*canvas.width,ry*canvas.height);},i*300));
-  setTimeout(()=>{running=false;},spots.length*300+1200);
+  [[.25,.28],[.75,.22],[.5,.14],[.15,.45],[.85,.38],[.4,.18],[.6,.3],[.3,.35],[.7,.12],[.5,.38],[.12,.18],[.88,.25],[.5,.08],[.35,.5],[.65,.45]]
+    .forEach(([rx,ry],i)=>setTimeout(()=>{if(running)burst(rx*canvas.width,ry*canvas.height);},i*300));
+  setTimeout(()=>{running=false;},15*300+1200);
   function draw(){
     ctx.fillStyle='rgba(0,0,0,0.11)';ctx.fillRect(0,0,canvas.width,canvas.height);
     parts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.065;p.vx*=0.99;p.alpha=Math.max(0,p.alpha-p.decay);ctx.globalAlpha=p.alpha;ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();});
@@ -774,11 +822,10 @@ function launchFireworks() {
 // ══════════════════════════════════════════════════════
 //  HINT
 // ══════════════════════════════════════════════════════
-function showHint() { document.getElementById('hintImg').src=PUZZLE_IMAGE; document.getElementById('hintModal').classList.add('show'); }
-function closeHint() { document.getElementById('hintModal').classList.remove('show'); }
+function showHint(){ document.getElementById('hintImg').src=PUZZLE_IMAGE; document.getElementById('hintModal').classList.add('show'); }
+function closeHint(){ document.getElementById('hintModal').classList.remove('show'); }
 (function(){
-  const m=document.getElementById('hintModal');
-  let drag=false,ox=0,oy=0;
+  const m=document.getElementById('hintModal'); let drag=false,ox=0,oy=0;
   m.addEventListener('mousedown',e=>{if(['BUTTON','INPUT','IMG'].includes(e.target.tagName))return;drag=true;const r=m.getBoundingClientRect();ox=e.clientX-r.left;oy=e.clientY-r.top;m.style.transform='none';m.style.left=r.left+'px';m.style.top=r.top+'px';});
   document.addEventListener('mousemove',e=>{if(drag){m.style.left=(e.clientX-ox)+'px';m.style.top=(e.clientY-oy)+'px';}});
   document.addEventListener('mouseup',()=>drag=false);
