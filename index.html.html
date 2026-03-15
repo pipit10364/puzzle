@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>🌙 Lebaran Puzzle Challenge</title>
 
-<!-- Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-VFRT453MG0"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -23,9 +22,9 @@
   --bg: #fdf6ff;
 }
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-html, body { font-family:'Inclusive Sans',sans-serif; background:var(--bg); overflow-x:hidden; }
+html, body { font-family:'Inclusive Sans',sans-serif; background:var(--bg); }
+/* FIX: TIDAK pakai overflow-x:hidden — itu yang memotong scattered pieces */
 
-/* ── SCREENS ── */
 .screen {
   position:fixed; inset:0; background:rgba(114,78,145,0.97);
   display:flex; align-items:flex-start; justify-content:center;
@@ -40,10 +39,7 @@ html, body { font-family:'Inclusive Sans',sans-serif; background:var(--bg); over
 .card h2 { font-size:26px; color:var(--primary); margin-bottom:14px; }
 .card p  { font-size:15px; color:#555; line-height:1.7; margin-bottom:10px; }
 .victory-time { font-size:52px; font-weight:700; color:var(--emphasis); margin:10px 0; }
-#solvedCanvas {
-  width:100%; max-width:360px; border-radius:12px;
-  margin:14px auto; border:3px solid var(--accent); display:block;
-}
+#solvedCanvas { width:100%; max-width:360px; border-radius:12px; margin:14px auto; border:3px solid var(--accent); display:block; }
 .btn {
   display:inline-block; background:var(--primary); color:#fff;
   padding:14px 36px; border:none; border-radius:50px;
@@ -52,13 +48,9 @@ html, body { font-family:'Inclusive Sans',sans-serif; background:var(--bg); over
 }
 .btn:hover { background:var(--emphasis); transform:translateY(-2px); }
 .btn:disabled { background:#bbb; cursor:not-allowed; transform:none; }
+.btn-download { background:#2ecc71; margin-right:8px; }
+.btn-download:hover { background:#27ae60; }
 
-.btn-download {
-  background: #2ecc71; margin-right: 8px;
-}
-.btn-download:hover { background: #27ae60; }
-
-/* ── HEADER ── */
 .header {
   background:var(--primary); color:#fff; text-align:center;
   padding:14px 16px 10px; position:sticky; top:0; z-index:100;
@@ -66,81 +58,56 @@ html, body { font-family:'Inclusive Sans',sans-serif; background:var(--bg); over
 .header h1 { font-size:20px; margin-bottom:4px; }
 .timer { font-size:42px; font-weight:700; color:var(--accent); letter-spacing:2px; }
 
-/* ── GAME WRAPPER ── */
+/* ── DESKTOP ── */
 .game-desktop {
   display:none;
   position:relative;
   width:100%;
-  overflow:visible; /* FIX: pastikan pieces tidak di-clip */
-}
-.game-desktop .grid-anchor {
-  position:absolute; top:50%; left:50%;
-  transform:translate(-50%,-50%);
-  z-index:10;
+  overflow:visible; /* pieces tidak ter-clip */
 }
 
+/* ── MOBILE ── */
 .game-mobile {
-  display:none;
-  flex-direction:column;
-  align-items:center;
-  padding:14px 10px 90px;
-  gap:14px;
+  display:none; flex-direction:column; align-items:center;
+  padding:14px 10px 90px; gap:14px;
 }
 
-/* ── PUZZLE GRID ── */
+/* ── GRID ── */
 .puzzle-grid {
   display:grid; grid-template-columns:repeat(6,1fr);
   gap:2px; background:var(--primary);
   padding:3px; border-radius:10px;
+  position:relative; z-index:20;
 }
 
-/* ── SLOTS ── */
 .slot {
-  background:rgba(255,255,255,0.18);
-  position:relative; overflow:visible;
+  background:rgba(255,255,255,0.18); position:relative;
   transition:background .12s, outline .12s;
 }
-.slot.drag-over {
-  background:rgba(242,201,76,0.5);
-  outline:2px dashed var(--accent);
-}
+.slot.drag-over { background:rgba(242,201,76,0.5); outline:2px dashed var(--accent); }
 
 /* ── PIECES ── */
 .piece {
   background-repeat:no-repeat;
-  /* FIX: fallback warna supaya piece selalu terlihat */
-  background-color: rgba(114, 78, 145, 0.25);
-  border: 1px solid rgba(114,78,145,0.3);
+  background-color:rgba(114,78,145,0.2); /* fallback jika gambar belum muncul */
+  border:1px solid rgba(114,78,145,0.25);
   cursor:grab; touch-action:none;
   user-select:none; -webkit-user-select:none;
-  border-radius:4px;
-  transition:box-shadow .12s;
-  position:relative; z-index:5;
+  border-radius:4px; position:relative; z-index:5;
 }
 .piece:active { cursor:grabbing; }
-.piece.dragging-active {
-  opacity:0.35;
-}
+.piece.dragging-active { opacity:0.3; }
 
 #ghostPiece {
-  position:fixed;
-  pointer-events:none;
-  z-index:9500;
-  border-radius:4px;
-  opacity:0.85;
-  box-shadow:0 8px 24px rgba(0,0,0,0.4);
-  display:none;
-  background-repeat:no-repeat;
-  /* FIX: fallback ghost */
-  background-color: rgba(114, 78, 145, 0.4);
+  position:fixed; pointer-events:none; z-index:9500;
+  border-radius:4px; opacity:0.88;
+  box-shadow:0 8px 28px rgba(0,0,0,0.4);
+  display:none; background-repeat:no-repeat;
+  background-color:rgba(114,78,145,0.3);
 }
 
-/* ── DESKTOP SCATTER ── */
-.scatter-wrap {
-  position:absolute;
-}
+.scatter-wrap { position:absolute; z-index:10; }
 
-/* ── MOBILE POOL ── */
 .mobile-pool {
   display:flex; flex-wrap:wrap; gap:8px; justify-content:center;
   background:#fff; border-radius:14px;
@@ -149,7 +116,6 @@ html, body { font-family:'Inclusive Sans',sans-serif; background:var(--bg); over
 }
 .pool-label { font-size:13px; color:#999; }
 
-/* ── HINT ── */
 .hint-btn {
   position:fixed; bottom:22px; right:20px;
   background:var(--emphasis); color:#fff;
@@ -169,26 +135,16 @@ html, body { font-family:'Inclusive Sans',sans-serif; background:var(--bg); over
 .hint-modal.show { display:block; }
 .hint-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; gap:10px; }
 .hint-top span { font-size:13px; color:#888; }
-.hint-close {
-  background:#e74c3c; color:#fff; border:none;
-  width:28px; height:28px; border-radius:50%; font-size:16px;
-  cursor:pointer; flex-shrink:0; line-height:28px; text-align:center;
-}
+.hint-close { background:#e74c3c; color:#fff; border:none; width:28px; height:28px; border-radius:50%; font-size:16px; cursor:pointer; flex-shrink:0; line-height:28px; text-align:center; }
 .hint-modal img { display:block; border-radius:8px; width:260px; max-width:80vw; }
 .hint-modal input[type=range] { width:100%; margin-top:8px; accent-color:var(--primary); }
 
-/* ── FIREWORK ── */
 #fwCanvas { position:fixed; inset:0; pointer-events:none; z-index:8999; }
-
-/* ── ERROR MESSAGE ── */
-.error-msg {
-  color:#e74c3c; font-size:13px; margin-top:6px;
-}
+.error-msg { color:#e74c3c; font-size:13px; margin-top:6px; }
 </style>
 </head>
 <body>
 
-<!-- START -->
 <div class="screen" id="startScreen">
   <div class="card">
     <h2>🌙 Lebaran Puzzle Challenge ✨</h2>
@@ -205,7 +161,6 @@ html, body { font-family:'Inclusive Sans',sans-serif; background:var(--bg); over
   </div>
 </div>
 
-<!-- VICTORY -->
 <div class="screen hidden" id="victoryScreen">
   <div class="card">
     <h2>🎉 Selamat!</h2>
@@ -222,7 +177,6 @@ html, body { font-family:'Inclusive Sans',sans-serif; background:var(--bg); over
 
 <canvas id="fwCanvas"></canvas>
 
-<!-- HINT MODAL -->
 <div class="hint-modal" id="hintModal">
   <div class="hint-top">
     <span>💡 Hint — drag to move</span>
@@ -235,20 +189,13 @@ html, body { font-family:'Inclusive Sans',sans-serif; background:var(--bg); over
 
 <div id="ghostPiece"></div>
 
-<!-- HEADER -->
 <div class="header">
   <h1>🌙 Lebaran Puzzle Challenge ✨</h1>
   <div class="timer" id="timer">00:00.0</div>
 </div>
 
-<!-- DESKTOP layout -->
-<div class="game-desktop" id="gameDesktop">
-  <div class="grid-anchor">
-    <div class="puzzle-grid" id="desktopGrid"></div>
-  </div>
-</div>
+<div class="game-desktop" id="gameDesktop"></div>
 
-<!-- MOBILE layout -->
 <div class="game-mobile" id="gameMobile">
   <div class="puzzle-grid" id="mobileGrid"></div>
   <div class="pool-label">Pieces — drag ke atas grid 👆</div>
@@ -258,9 +205,6 @@ html, body { font-family:'Inclusive Sans',sans-serif; background:var(--bg); over
 <button class="hint-btn" onclick="showHint()">💡 Hint</button>
 
 <script>
-// ══════════════════════════════════════════════════════
-//  CONFIG
-// ══════════════════════════════════════════════════════
 const IMAGES = [
   'https://raw.githubusercontent.com/pipit10364/CMON/main/CMON%202026_20260314_163020_0000.png',
   'https://raw.githubusercontent.com/pipit10364/CMON/main/CMON%202026%20(4).png',
@@ -271,26 +215,14 @@ const IMAGES = [
 ];
 const GRID = 6;
 
-// ══════════════════════════════════════════════════════
-//  STATE
-// ══════════════════════════════════════════════════════
 let PUZZLE_IMAGE = '';
-let completedPieces = 0;
-let startTime = null;
-let timerInterval = null;
-let audioCtx = null;
-let musicStopped = false;
-let isMobile = false;
+let startTime = null, timerInterval = null;
+let audioCtx = null, musicStopped = false;
+let isMobile = false, dragInfo = null;
+let gridPiecePx = 60; // ukuran piece saat di dalam grid
 
-let dragInfo = null;
-let slotContents = new Map();
-
-// ══════════════════════════════════════════════════════
-//  IMAGE PRELOAD
-// ══════════════════════════════════════════════════════
-function pickImage() {
-  return IMAGES[Math.floor(Math.random() * IMAGES.length)];
-}
+// ── LOAD ──
+function pickImage() { return IMAGES[Math.floor(Math.random() * IMAGES.length)]; }
 
 function preloadImage(url) {
   return new Promise((resolve, reject) => {
@@ -298,303 +230,250 @@ function preloadImage(url) {
     img.crossOrigin = 'anonymous';
     let pct = 0;
     const bar = document.getElementById('loadBar');
-    const tick = setInterval(() => {
-      pct = Math.min(pct + Math.random() * 13, 88);
-      bar.style.width = pct + '%';
-    }, 180);
-
-    // FIX: pisahkan onload dan onerror
-    img.onload = () => {
-      clearInterval(tick);
-      bar.style.width = '100%';
-      setTimeout(() => resolve(true), 250);
-    };
-    img.onerror = () => {
-      clearInterval(tick);
-      bar.style.width = '0%';
-      reject(new Error('Gambar gagal dimuat: ' + url));
-    };
+    const tick = setInterval(() => { pct = Math.min(pct + Math.random()*13, 88); bar.style.width = pct+'%'; }, 180);
+    img.onload  = () => { clearInterval(tick); bar.style.width='100%'; setTimeout(()=>resolve(true),250); };
+    img.onerror = () => { clearInterval(tick); reject(); };
     img.src = url;
   });
 }
 
-function initLoad() {
+(function initLoad() {
   PUZZLE_IMAGE = pickImage();
-  preloadImage(PUZZLE_IMAGE).then(() => {
-    document.getElementById('loadText').textContent = '✅ Gambar siap!';
-    const btn = document.getElementById('startBtn');
-    btn.disabled = false;
-    btn.textContent = '🚀 Mulai!';
-  }).catch(err => {
-    // Coba gambar pertama sebagai fallback
-    PUZZLE_IMAGE = IMAGES[0];
+  const tryNext = (idx) => {
     preloadImage(PUZZLE_IMAGE).then(() => {
       document.getElementById('loadText').textContent = '✅ Gambar siap!';
       const btn = document.getElementById('startBtn');
-      btn.disabled = false;
-      btn.textContent = '🚀 Mulai!';
+      btn.disabled = false; btn.textContent = '🚀 Mulai!';
     }).catch(() => {
-      document.getElementById('loadText').textContent = '❌ Gagal memuat gambar';
-      document.getElementById('loadError').style.display = 'block';
-      document.getElementById('loadError').textContent = 'Cek koneksi internet kamu.';
+      if (idx < IMAGES.length) {
+        PUZZLE_IMAGE = IMAGES[idx];
+        tryNext(idx + 1);
+      } else {
+        document.getElementById('loadText').textContent = '❌ Gagal memuat';
+        document.getElementById('loadError').style.display = 'block';
+        document.getElementById('loadError').textContent = 'Cek koneksi internet.';
+      }
     });
-  });
-}
+  };
+  tryNext(0);
+})();
 
-initLoad();
-
-// ══════════════════════════════════════════════════════
-//  BG STYLE HELPERS
-// FIX UTAMA: tambahkan quotes di url() agar aman untuk
-//  nama file yang mengandung tanda kurung seperti (4).png
-// ══════════════════════════════════════════════════════
-function applyBgToEl(el, row, col, pxSize) {
-  const bpX = (col / (GRID - 1)) * 100;
-  const bpY = (row / (GRID - 1)) * 100;
-  // ✅ FIX: pakai single quotes di dalam url() supaya
-  //    karakter seperti () di nama file tidak merusak CSS
-  el.style.backgroundImage    = `url('${PUZZLE_IMAGE}')`;
+// ── BG HELPER ──
+// FIX: pixel offset, bukan persentase. Akurat untuk semua posisi.
+function applyBg(el, row, col, pxSize) {
+  el.style.backgroundImage    = `url('${PUZZLE_IMAGE}')`;        // quotes wajib!
   el.style.backgroundSize     = `${GRID * pxSize}px ${GRID * pxSize}px`;
-  el.style.backgroundPosition = `${bpX}% ${bpY}%`;
+  el.style.backgroundPosition = `-${col * pxSize}px -${row * pxSize}px`;
 }
 
-// ══════════════════════════════════════════════════════
-//  AUDIO
-// ══════════════════════════════════════════════════════
+// ── AUDIO ──
 function initAudio() {
   if (audioCtx) return;
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 }
-
-function synthNote(freq, type, t, dur, vol) {
-  const osc = audioCtx.createOscillator();
-  const g   = audioCtx.createGain();
-  osc.type = type; osc.frequency.value = freq;
-  osc.connect(g); g.connect(audioCtx.destination);
-  g.gain.setValueAtTime(0, t);
-  g.gain.linearRampToValueAtTime(vol, t + 0.04);
-  g.gain.linearRampToValueAtTime(0, t + dur - 0.04);
-  osc.start(t); osc.stop(t + dur);
+function synthNote(f,type,t,dur,vol) {
+  const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+  o.type=type; o.frequency.value=f; o.connect(g); g.connect(audioCtx.destination);
+  g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+0.04);
+  g.gain.linearRampToValueAtTime(0,t+dur-0.04); o.start(t); o.stop(t+dur);
 }
-
-function drumHit(t, decay, vol) {
-  const len  = Math.ceil(audioCtx.sampleRate * decay * 5);
-  const buf  = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
-  const data = buf.getChannelData(0);
-  for (let i = 0; i < len; i++)
-    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (audioCtx.sampleRate * decay));
-  const src = audioCtx.createBufferSource();
-  const g   = audioCtx.createGain();
-  src.buffer = buf; g.gain.value = vol;
-  src.connect(g); g.connect(audioCtx.destination);
-  src.start(t);
+function drumHit(t,decay,vol) {
+  const len=Math.ceil(audioCtx.sampleRate*decay*5);
+  const buf=audioCtx.createBuffer(1,len,audioCtx.sampleRate);
+  const d=buf.getChannelData(0);
+  for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.exp(-i/(audioCtx.sampleRate*decay));
+  const s=audioCtx.createBufferSource(), g=audioCtx.createGain();
+  s.buffer=buf; g.gain.value=vol; s.connect(g); g.connect(audioCtx.destination); s.start(t);
 }
-
 function playLebaranMusic() {
-  if (!audioCtx || musicStopped) return;
-  const t = audioCtx.currentTime;
-  [523,587,659,698,783,698,659,587].forEach((f,i) => synthNote(f,'triangle', t+i*0.38, 0.32, 0.06));
-  [261,293,261,329].forEach((f,i)            => synthNote(f,'sine',     t+i*0.76, 0.65, 0.04));
-  [0, 0.76, 1.52, 2.28, 2.66].forEach(o     => drumHit(t+o, 0.04, 0.18));
-  if (!musicStopped) window._mLoop = setTimeout(playLebaranMusic, 8 * 0.38 * 1000);
+  if (!audioCtx||musicStopped) return;
+  const t=audioCtx.currentTime;
+  [523,587,659,698,783,698,659,587].forEach((f,i)=>synthNote(f,'triangle',t+i*0.38,0.32,0.06));
+  [261,293,261,329].forEach((f,i)=>synthNote(f,'sine',t+i*0.76,0.65,0.04));
+  [0,0.76,1.52,2.28,2.66].forEach(o=>drumHit(t+o,0.04,0.18));
+  if (!musicStopped) window._mLoop=setTimeout(playLebaranMusic,8*0.38*1000);
 }
-
-function stopMusic() {
-  musicStopped = true;
-  clearTimeout(window._mLoop);
-}
-
+function stopMusic() { musicStopped=true; clearTimeout(window._mLoop); }
 function playVictorySound() {
   if (!audioCtx) return;
-  const t = audioCtx.currentTime;
-  [523,659,783,1046].forEach((f,i) => synthNote(f,'square', t+i*0.18, 0.42, 0.08));
-  [0.8,1.05,1.3,1.55,1.8,1.95,2.1,2.25,2.4].forEach(o => drumHit(t+o, 0.07, 0.45));
-  synthNote(1318,'sine', t+0.8, 0.6, 0.06);
+  const t=audioCtx.currentTime;
+  [523,659,783,1046].forEach((f,i)=>synthNote(f,'square',t+i*0.18,0.42,0.08));
+  [0.8,1.05,1.3,1.55,1.8,1.95,2.1,2.25,2.4].forEach(o=>drumHit(t+o,0.07,0.45));
+  synthNote(1318,'sine',t+0.8,0.6,0.06);
 }
 
-// ══════════════════════════════════════════════════════
-//  BUILD PUZZLE
-// ══════════════════════════════════════════════════════
-function buildGrid(gridEl, pxSize) {
-  gridEl.innerHTML = '';
-  slotContents.clear();
-  gridEl.style.width  = pxSize + 'px';
-  gridEl.style.height = pxSize + 'px';
-
-  for (let i = 0; i < GRID * GRID; i++) {
-    const slot = document.createElement('div');
-    slot.className = 'slot';
-    slot.dataset.slotIndex = i;
-    slotContents.set(slot, null);
-    gridEl.appendChild(slot);
+// ── BUILD ──
+function makeGrid(pxSize) {
+  const g = document.createElement('div');
+  g.className = 'puzzle-grid';
+  const total = pxSize * GRID;
+  g.style.width = total+'px'; g.style.height = total+'px';
+  for (let i=0; i<GRID*GRID; i++) {
+    const s = document.createElement('div');
+    s.className = 'slot'; s.dataset.slotIndex = i;
+    s.style.width = pxSize+'px'; s.style.height = pxSize+'px';
+    g.appendChild(s);
   }
+  return g;
 }
 
-function buildPiece(row, col, pxSize) {
+function makePiece(row, col, pxSize) {
   const el = document.createElement('div');
   el.className = 'piece';
-  el.dataset.row = row;
-  el.dataset.col = col;
-  el.dataset.origSize = pxSize; // FIX: simpan ukuran asli untuk returnToPool
-  el.style.width  = pxSize + 'px';
-  el.style.height = pxSize + 'px';
-  applyBgToEl(el, row, col, pxSize);
-
+  el.dataset.row = row; el.dataset.col = col; el.dataset.origSize = pxSize;
+  el.style.width = pxSize+'px'; el.style.height = pxSize+'px';
+  applyBg(el, row, col, pxSize);
   el.addEventListener('pointerdown', onPiecePointerDown);
   return el;
 }
 
-function shuffleArray(arr) {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
+function shuffle(arr) {
+  for (let i=arr.length-1; i>0; i--) {
+    const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]];
   }
   return arr;
 }
 
+// ── INIT PUZZLE ──
 function initPuzzle() {
   isMobile = window.innerWidth <= 680;
-  completedPieces = 0;
-  dragInfo = null;
+  dragInfo  = null;
 
-  const pieces = [];
-  for (let r = 0; r < GRID; r++)
-    for (let c = 0; c < GRID; c++)
-      pieces.push({row: r, col: c});
-  shuffleArray(pieces);
+  const all = [];
+  for (let r=0; r<GRID; r++) for (let c=0; c<GRID; c++) all.push({r,c});
+  shuffle(all);
 
   if (!isMobile) {
-    document.getElementById('gameDesktop').style.display = 'block';
-    document.getElementById('gameMobile').style.display  = 'none';
+    // ── DESKTOP ──
+    const area = document.getElementById('gameDesktop');
+    area.style.display = 'block';
+    document.getElementById('gameMobile').style.display = 'none';
+    area.innerHTML = ''; // bersihkan semuanya
 
     const vw = window.innerWidth;
-    const vh = window.innerHeight - 80;
-    const areaH = Math.max(vh, 520);
-    const gridPx = Math.min(390, vw * 0.38, areaH * 0.72);
-    const piecePx = Math.round(gridPx / GRID);
-    const actualGrid = piecePx * GRID;
+    const vh = Math.max(window.innerHeight - 80, 560);
+    area.style.height = vh + 'px';
 
-    const area = document.getElementById('gameDesktop');
-    area.style.height = areaH + 'px';
+    // Ukuran grid: 40% vw atau 65% vh, max 400px
+    const gPx   = Math.min(Math.floor(vw * 0.40), Math.floor(vh * 0.65), 400);
+    const pPx   = Math.floor(gPx / GRID);
+    const total = pPx * GRID;
+    gridPiecePx = pPx;
 
-    const gridEl = document.getElementById('desktopGrid');
-    buildGrid(gridEl, actualGrid);
-    gridEl.querySelectorAll('.slot').forEach(s => {
-      s.style.width  = piecePx + 'px';
-      s.style.height = piecePx + 'px';
-    });
+    // Buat grid dan taruh di tengah area
+    const grid = makeGrid(pPx);
+    grid.id = 'desktopGrid';
+    grid.style.position = 'absolute';
+    grid.style.left = Math.round((vw - total) / 2) + 'px';
+    grid.style.top  = Math.round((vh - total) / 2) + 'px';
+    area.appendChild(grid);
 
-    // Hapus scatter lama
-    area.querySelectorAll('.scatter-wrap').forEach(w => w.remove());
+    // Hitung batas "zona larang" grid
+    const gLeft   = Math.round((vw - total) / 2);
+    const gTop    = Math.round((vh - total) / 2);
+    const gRight  = gLeft + total;
+    const gBottom = gTop  + total;
+    const safe    = 18; // jarak aman dari tepi grid
+    const margin  = 10; // jarak min dari tepi layar
 
-    const cx = vw / 2;
-    const cy = areaH / 2;
-    const half = actualGrid / 2 + 20;
-    const margin = 14;
-
-    pieces.forEach(p => {
-      const pieceEl = buildPiece(p.row, p.col, piecePx);
-      const wrap = document.createElement('div');
+    // Scatter pieces di 4 zona sekeliling grid
+    all.forEach((p, idx) => {
+      const piece = makePiece(p.r, p.c, pPx);
+      const wrap  = document.createElement('div');
       wrap.className = 'scatter-wrap';
 
-      // FIX: logika scatter yang lebih andal
-      // Bagi pieces ke 4 zona di sekeliling grid
-      let x, y;
-      const zone = Math.floor(Math.random() * 4);
-      const padding = margin;
+      let x, y, tries = 0;
+      const zone = idx % 4; // distribusi merata ke 4 zona
+      do {
+        if (zone === 0 && gLeft - safe - pPx - margin > margin) {
+          // Kiri
+          x = margin + Math.random() * (gLeft - safe - pPx - margin);
+          y = margin + Math.random() * (vh - pPx - margin*2);
+        } else if (zone === 1 && gRight + safe + pPx + margin < vw) {
+          // Kanan
+          x = gRight + safe + Math.random() * (vw - gRight - safe - pPx - margin);
+          y = margin + Math.random() * (vh - pPx - margin*2);
+        } else if (zone === 2 && gTop - safe - pPx - margin > margin) {
+          // Atas
+          x = margin + Math.random() * (vw - pPx - margin*2);
+          y = margin + Math.random() * (gTop - safe - pPx - margin);
+        } else {
+          // Bawah (atau fallback zona penuh)
+          x = margin + Math.random() * (vw - pPx - margin*2);
+          const minY = gBottom + safe;
+          const maxY = vh - pPx - margin;
+          y = minY < maxY ? minY + Math.random()*(maxY-minY) : margin + Math.random()*(vh-pPx-margin*2);
+        }
+        tries++;
+      } while (tries < 50 && overlapGrid(x, y, pPx, gLeft, gTop, gRight, gBottom, safe));
 
-      if (zone === 0 && cx - half - piecePx - padding > padding) {
-        // Kiri grid
-        x = padding + Math.random() * (cx - half - piecePx - padding * 2);
-        y = padding + Math.random() * (areaH - piecePx - padding * 2);
-      } else if (zone === 1 && cx + half + piecePx + padding < vw) {
-        // Kanan grid
-        x = cx + half + padding + Math.random() * (vw - cx - half - piecePx - padding * 2);
-        y = padding + Math.random() * (areaH - piecePx - padding * 2);
-      } else if (zone === 2 && cy - half - piecePx - padding > padding) {
-        // Atas grid
-        x = padding + Math.random() * (vw - piecePx - padding * 2);
-        y = padding + Math.random() * (cy - half - piecePx - padding * 2);
-      } else {
-        // Bawah grid (atau fallback)
-        x = padding + Math.random() * (vw - piecePx - padding * 2);
-        const bottomStart = cy + half + padding;
-        const bottomMax = areaH - piecePx - padding;
-        y = bottomStart < bottomMax
-          ? bottomStart + Math.random() * (bottomMax - bottomStart)
-          : padding + Math.random() * (areaH - piecePx - padding * 2);
-      }
+      // Clamp agar tidak keluar dari area
+      x = Math.max(margin, Math.min(x, vw - pPx - margin));
+      y = Math.max(margin, Math.min(y, vh - pPx - margin));
 
-      // Clamp agar tidak keluar viewport
-      x = Math.max(margin, Math.min(x, vw - piecePx - margin));
-      y = Math.max(margin, Math.min(y, areaH - piecePx - margin));
-
-      wrap.style.left = x + 'px';
-      wrap.style.top  = y + 'px';
-      wrap.appendChild(pieceEl);
+      wrap.style.left = Math.round(x) + 'px';
+      wrap.style.top  = Math.round(y) + 'px';
+      wrap.appendChild(piece);
       area.appendChild(wrap);
     });
 
   } else {
+    // ── MOBILE ──
     document.getElementById('gameDesktop').style.display = 'none';
-    document.getElementById('gameMobile').style.display  = 'flex';
+    const mob = document.getElementById('gameMobile');
+    mob.style.display = 'flex';
 
-    const vw = window.innerWidth;
-    const gridPx = Math.min(vw - 24, 390);
-    const piecePx = Math.round(gridPx / GRID);
-    const actualGrid = piecePx * GRID;
-    const poolPiecePx = Math.min(52, Math.floor((vw - 40) / 7));
+    const vw  = window.innerWidth;
+    const gPx = Math.min(vw - 24, 390);
+    const pPx = Math.floor(gPx / GRID);
+    const ppPx = Math.min(52, Math.floor((vw - 40) / 7));
+    gridPiecePx = pPx;
 
-    const gridEl = document.getElementById('mobileGrid');
-    buildGrid(gridEl, actualGrid);
-    gridEl.querySelectorAll('.slot').forEach(s => {
-      s.style.width  = piecePx + 'px';
-      s.style.height = piecePx + 'px';
-    });
+    const mGrid = document.getElementById('mobileGrid');
+    mGrid.innerHTML = '';
+    const grid = makeGrid(pPx);
+    grid.id = 'mobileGrid';
+    // replace in DOM
+    mGrid.parentNode.replaceChild(grid, mGrid);
 
     const pool = document.getElementById('mobilePool');
     pool.innerHTML = '';
-    pieces.forEach(p => pool.appendChild(buildPiece(p.row, p.col, poolPiecePx)));
+    all.forEach(p => pool.appendChild(makePiece(p.r, p.c, ppPx)));
   }
 }
 
-// ══════════════════════════════════════════════════════
-//  DRAG SYSTEM
-// ══════════════════════════════════════════════════════
+function overlapGrid(x, y, sz, gl, gt, gr, gb, pad) {
+  return x + sz > gl - pad && x < gr + pad && y + sz > gt - pad && y < gb + pad;
+}
+
+// ── DRAG ──
 const ghost = document.getElementById('ghostPiece');
 
 function onPiecePointerDown(e) {
-  if (e.button !== undefined && e.button !== 0) return;
+  if (e.button && e.button !== 0) return;
   const pieceEl = e.currentTarget;
-  if (pieceEl.classList.contains('no-drag')) return;
+  e.preventDefault(); e.stopPropagation();
 
-  e.preventDefault();
-  e.stopPropagation();
-
-  const rect = pieceEl.getBoundingClientRect();
-  const pxSize = pieceEl.offsetWidth;
-  const row = parseInt(pieceEl.dataset.row);
-  const col = parseInt(pieceEl.dataset.col);
-
-  const fromSlot = pieceEl.closest('.slot') || null;
+  const rect    = pieceEl.getBoundingClientRect();
+  const pxSize  = pieceEl.offsetWidth;
+  const row     = +pieceEl.dataset.row;
+  const col     = +pieceEl.dataset.col;
+  const fromSlot = pieceEl.closest('.slot')        || null;
   const fromWrap = pieceEl.closest('.scatter-wrap') || null;
 
-  ghost.style.width    = pxSize + 'px';
-  ghost.style.height   = pxSize + 'px';
-  applyBgToEl(ghost, row, col, pxSize);
-  ghost.style.display  = 'block';
-  ghost.style.left     = rect.left + 'px';
-  ghost.style.top      = rect.top  + 'px';
-  ghost.style.borderRadius = '4px';
+  ghost.style.cssText = `
+    width:${pxSize}px; height:${pxSize}px; border-radius:4px;
+    border:1px solid rgba(114,78,145,0.3); display:block;
+    left:${rect.left}px; top:${rect.top}px;
+  `;
+  applyBg(ghost, row, col, pxSize);
 
   const offsetX = e.clientX - rect.left;
   const offsetY = e.clientY - rect.top;
 
   dragInfo = { pieceEl, row, col, fromSlot, fromWrap, pxSize, offsetX, offsetY };
-
   pieceEl.classList.add('dragging-active');
   pieceEl.setPointerCapture(e.pointerId);
-
   pieceEl.addEventListener('pointermove',   onPointerMove);
   pieceEl.addEventListener('pointerup',     onPointerUp);
   pieceEl.addEventListener('pointercancel', onPointerCancel);
@@ -605,11 +484,10 @@ function onPointerMove(e) {
   e.preventDefault();
   ghost.style.left = (e.clientX - dragInfo.offsetX) + 'px';
   ghost.style.top  = (e.clientY - dragInfo.offsetY) + 'px';
-
   ghost.style.display = 'none';
   const under = document.elementFromPoint(e.clientX, e.clientY);
   ghost.style.display = 'block';
-  document.querySelectorAll('.slot.drag-over').forEach(s => s.classList.remove('drag-over'));
+  document.querySelectorAll('.slot.drag-over').forEach(s=>s.classList.remove('drag-over'));
   const slot = under && under.closest('.slot');
   if (slot) slot.classList.add('drag-over');
 }
@@ -617,30 +495,17 @@ function onPointerMove(e) {
 function onPointerUp(e) {
   if (!dragInfo) return;
   e.preventDefault();
-
   ghost.style.display = 'none';
-  document.querySelectorAll('.slot.drag-over').forEach(s => s.classList.remove('drag-over'));
+  document.querySelectorAll('.slot.drag-over').forEach(s=>s.classList.remove('drag-over'));
   dragInfo.pieceEl.classList.remove('dragging-active');
-
   const under = document.elementFromPoint(e.clientX, e.clientY);
-  const targetSlot = under && under.closest('.slot');
-
-  if (targetSlot) {
-    dropOnSlot(targetSlot);
-  } else {
-    returnPiece();
-  }
-
-  cleanup(e);
+  const slot  = under && under.closest('.slot');
+  if (slot) dropOnSlot(slot); else returnPiece();
+  cleanup();
 }
+function onPointerCancel() { if (!dragInfo) return; returnPiece(); cleanup(); }
 
-function onPointerCancel(e) {
-  if (!dragInfo) return;
-  returnPiece();
-  cleanup(e);
-}
-
-function cleanup(e) {
+function cleanup() {
   if (!dragInfo) return;
   ghost.style.display = 'none';
   dragInfo.pieceEl.classList.remove('dragging-active');
@@ -651,304 +516,162 @@ function cleanup(e) {
   dragInfo = null;
 }
 
-// ══════════════════════════════════════════════════════
-//  PLACE LOGIC
-// ══════════════════════════════════════════════════════
+// ── PLACE ──
 function dropOnSlot(targetSlot) {
   const { pieceEl, fromSlot, fromWrap } = dragInfo;
-
-  const existingPiece = targetSlot.querySelector('.piece');
-
-  if (existingPiece) {
-    // Ada piece di slot target — tukar posisi
-    if (fromSlot) {
-      placePieceInSlot(existingPiece, fromSlot);
-    } else {
-      returnToPool(existingPiece);
-    }
+  const existing = targetSlot.querySelector('.piece');
+  if (existing) {
+    if (fromSlot) placePieceInSlot(existing, fromSlot);
+    else          sendToScatter(existing);
   }
-
   placePieceInSlot(pieceEl, targetSlot);
   checkCompletion();
 }
 
 function placePieceInSlot(pieceEl, slot) {
-  const slotSize = slot.offsetWidth;
-  pieceEl.style.width  = slotSize + 'px';
-  pieceEl.style.height = slotSize + 'px';
-  applyBgToEl(pieceEl, parseInt(pieceEl.dataset.row), parseInt(pieceEl.dataset.col), slotSize);
+  const sz = slot.offsetWidth;
+  pieceEl.style.width  = sz+'px';
+  pieceEl.style.height = sz+'px';
   pieceEl.style.borderRadius = '0';
-  pieceEl.style.border = 'none'; // hilangkan border debug di slot
+  pieceEl.style.border = 'none';
+  applyBg(pieceEl, +pieceEl.dataset.row, +pieceEl.dataset.col, sz);
   slot.innerHTML = '';
   slot.appendChild(pieceEl);
-  slotContents.set(slot, { row: parseInt(pieceEl.dataset.row), col: parseInt(pieceEl.dataset.col) });
 }
 
-function returnToPool(pieceEl) {
-  const origSize = parseInt(pieceEl.dataset.origSize || 60);
+function sendToScatter(pieceEl) {
+  const origSize = +(pieceEl.dataset.origSize || gridPiecePx);
+  pieceEl.style.width  = origSize+'px';
+  pieceEl.style.height = origSize+'px';
+  pieceEl.style.borderRadius = '4px';
+  pieceEl.style.border = '1px solid rgba(114,78,145,0.25)';
+  applyBg(pieceEl, +pieceEl.dataset.row, +pieceEl.dataset.col, origSize);
+
   if (isMobile) {
-    pieceEl.style.width  = origSize + 'px';
-    pieceEl.style.height = origSize + 'px';
-    applyBgToEl(pieceEl, parseInt(pieceEl.dataset.row), parseInt(pieceEl.dataset.col), origSize);
-    pieceEl.style.borderRadius = '4px';
-    pieceEl.style.border = '1px solid rgba(114,78,145,0.3)';
     document.getElementById('mobilePool').appendChild(pieceEl);
   } else {
     const area = document.getElementById('gameDesktop');
-    const areaW = area.offsetWidth;
-    const areaH = area.offsetHeight;
-    pieceEl.style.width  = origSize + 'px';
-    pieceEl.style.height = origSize + 'px';
-    applyBgToEl(pieceEl, parseInt(pieceEl.dataset.row), parseInt(pieceEl.dataset.col), origSize);
-    pieceEl.style.borderRadius = '4px';
-    pieceEl.style.border = '1px solid rgba(114,78,145,0.3)';
     const wrap = document.createElement('div');
     wrap.className = 'scatter-wrap';
-    wrap.style.left = (14 + Math.random() * (areaW - origSize - 28)) + 'px';
-    wrap.style.top  = (14 + Math.random() * (areaH - origSize - 28)) + 'px';
+    wrap.style.left = (14 + Math.random()*(area.offsetWidth  - origSize - 28)) + 'px';
+    wrap.style.top  = (14 + Math.random()*(area.offsetHeight - origSize - 28)) + 'px';
     wrap.appendChild(pieceEl);
     area.appendChild(wrap);
   }
 }
 
-// FIX: returnPiece sekarang handle fromWrap (desktop scatter) dengan benar
 function returnPiece() {
   if (!dragInfo) return;
   const { pieceEl, fromSlot, fromWrap, pxSize } = dragInfo;
   if (fromSlot) {
-    // Kembalikan ke slot asal
-    pieceEl.style.width  = fromSlot.offsetWidth + 'px';
-    pieceEl.style.height = fromSlot.offsetWidth + 'px';
+    const sz = fromSlot.offsetWidth;
+    pieceEl.style.width  = sz+'px';
+    pieceEl.style.height = sz+'px';
+    pieceEl.style.borderRadius = '0';
+    pieceEl.style.border = 'none';
+    applyBg(pieceEl, +pieceEl.dataset.row, +pieceEl.dataset.col, sz);
     fromSlot.appendChild(pieceEl);
   } else if (fromWrap) {
-    // FIX: Kembalikan ke scatter wrap asal di desktop
-    pieceEl.style.width  = pxSize + 'px';
-    pieceEl.style.height = pxSize + 'px';
-    applyBgToEl(pieceEl, parseInt(pieceEl.dataset.row), parseInt(pieceEl.dataset.col), pxSize);
+    pieceEl.style.width  = pxSize+'px';
+    pieceEl.style.height = pxSize+'px';
     pieceEl.style.borderRadius = '4px';
-    pieceEl.style.border = '1px solid rgba(114,78,145,0.3)';
+    pieceEl.style.border = '1px solid rgba(114,78,145,0.25)';
+    applyBg(pieceEl, +pieceEl.dataset.row, +pieceEl.dataset.col, pxSize);
     fromWrap.appendChild(pieceEl);
   } else {
-    // Mobile pool — kembalikan ke pool
-    returnToPool(pieceEl);
+    sendToScatter(pieceEl);
   }
   pieceEl.style.opacity = '';
-  pieceEl.classList.remove('dragging-active');
 }
 
 function checkCompletion() {
   let correct = 0;
   document.querySelectorAll('.slot').forEach(slot => {
-    const piece = slot.querySelector('.piece');
-    if (!piece) return;
-    const slotIdx = parseInt(slot.dataset.slotIndex);
-    const expectedRow = Math.floor(slotIdx / GRID);
-    const expectedCol = slotIdx % GRID;
-    if (parseInt(piece.dataset.row) === expectedRow && parseInt(piece.dataset.col) === expectedCol) {
-      correct++;
-    }
+    const p = slot.querySelector('.piece');
+    if (!p) return;
+    const idx = +slot.dataset.slotIndex;
+    if (+p.dataset.row === Math.floor(idx/GRID) && +p.dataset.col === idx%GRID) correct++;
   });
-  if (correct === GRID * GRID) {
-    finishPuzzle();
-  }
+  if (correct === GRID*GRID) finishPuzzle();
 }
 
-// ══════════════════════════════════════════════════════
-//  TIMER
-// ══════════════════════════════════════════════════════
+// ── TIMER ──
 function startTimer() {
   startTime = Date.now();
   timerInterval = setInterval(() => {
-    const e = (Date.now() - startTime) / 1000;
-    const m = Math.floor(e / 60);
-    const s = (e % 60).toFixed(1).padStart(4, '0');
-    document.getElementById('timer').textContent =
-      String(m).padStart(2, '0') + ':' + s;
+    const e=(Date.now()-startTime)/1000, m=Math.floor(e/60);
+    const s=(e%60).toFixed(1).padStart(4,'0');
+    document.getElementById('timer').textContent = String(m).padStart(2,'0')+':'+s;
   }, 100);
 }
 
-// ══════════════════════════════════════════════════════
-//  START / RESTART / FINISH
-// ══════════════════════════════════════════════════════
+// ── GAME FLOW ──
 function startPuzzle() {
   initAudio();
   document.getElementById('startScreen').classList.add('hidden');
-  initPuzzle();
-  startTimer();
-  musicStopped = false;
-  setTimeout(playLebaranMusic, 150);
-
-  if (typeof gtag !== 'undefined') {
-    gtag('event', 'puzzle_started', { 'event_category': 'Game', 'event_label': 'Lebaran Puzzle' });
-  }
+  initPuzzle(); startTimer();
+  musicStopped = false; setTimeout(playLebaranMusic, 150);
+  if (typeof gtag!=='undefined') gtag('event','puzzle_started',{event_category:'Game',event_label:'Lebaran Puzzle'});
 }
 
 function restartGame() {
-  clearInterval(timerInterval);
-  stopMusic();
+  clearInterval(timerInterval); stopMusic();
   PUZZLE_IMAGE = pickImage();
   document.getElementById('victoryScreen').classList.add('hidden');
   document.getElementById('timer').textContent = '00:00.0';
-  document.getElementById('loadBar').style.width = '0%';
-  document.getElementById('loadText').textContent = '⏳ Memuat gambar…';
-
-  preloadImage(PUZZLE_IMAGE).then(() => {
-    document.getElementById('loadText').textContent = '✅ Siap!';
-    initPuzzle();
-    startTimer();
-    musicStopped = false;
-    setTimeout(playLebaranMusic, 150);
-
-    if (typeof gtag !== 'undefined') {
-      gtag('event', 'puzzle_restarted', { 'event_category': 'Game', 'event_label': 'Lebaran Puzzle' });
-    }
-  }).catch(() => {
-    // fallback ke gambar pertama jika gagal
-    PUZZLE_IMAGE = IMAGES[0];
-    initPuzzle();
-    startTimer();
-    musicStopped = false;
-    setTimeout(playLebaranMusic, 150);
-  });
+  preloadImage(PUZZLE_IMAGE)
+    .catch(()=>{ PUZZLE_IMAGE=IMAGES[0]; return preloadImage(PUZZLE_IMAGE); })
+    .finally(()=>{ initPuzzle(); startTimer(); musicStopped=false; setTimeout(playLebaranMusic,150); });
 }
 
 function finishPuzzle() {
-  clearInterval(timerInterval);
-  stopMusic();
-
-  const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-  document.getElementById('finalTime').textContent = '⏱ ' + elapsed + ' detik';
-
-  const canvas = document.getElementById('solvedCanvas');
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
-  img.onload = () => {
-    canvas.width  = img.naturalWidth;
-    canvas.height = img.naturalHeight;
-    canvas.getContext('2d').drawImage(img, 0, 0);
-  };
-  img.src = PUZZLE_IMAGE;
-
+  clearInterval(timerInterval); stopMusic();
+  const elapsed = ((Date.now()-startTime)/1000).toFixed(1);
+  document.getElementById('finalTime').textContent = '⏱ '+elapsed+' detik';
+  const canvas=document.getElementById('solvedCanvas'), img=new Image();
+  img.crossOrigin='anonymous';
+  img.onload=()=>{ canvas.width=img.naturalWidth; canvas.height=img.naturalHeight; canvas.getContext('2d').drawImage(img,0,0); };
+  img.src=PUZZLE_IMAGE;
   document.getElementById('victoryScreen').classList.remove('hidden');
-  document.getElementById('victoryScreen').scrollTop = 0;
-
-  setTimeout(() => { launchFireworks(); playVictorySound(); }, 400);
-
-  if (typeof gtag !== 'undefined') {
-    gtag('event', 'puzzle_completed', { 'event_category': 'Game', 'event_label': 'Lebaran Puzzle', 'value': parseFloat(elapsed) });
-  }
+  document.getElementById('victoryScreen').scrollTop=0;
+  setTimeout(()=>{ launchFireworks(); playVictorySound(); },400);
+  if (typeof gtag!=='undefined') gtag('event','puzzle_completed',{event_category:'Game',event_label:'Lebaran Puzzle',value:parseFloat(elapsed)});
 }
 
-// ══════════════════════════════════════════════════════
-//  DOWNLOAD IMAGE
-// ══════════════════════════════════════════════════════
 function downloadImage() {
-  const canvas = document.getElementById('solvedCanvas');
-  const link = document.createElement('a');
-  link.download = 'lebaran_puzzle_' + Date.now() + '.png';
-  link.href = canvas.toDataURL('image/png');
-  link.click();
-
-  if (typeof gtag !== 'undefined') {
-    gtag('event', 'image_downloaded', { 'event_category': 'Engagement', 'event_label': 'Lebaran Puzzle' });
-  }
+  const c=document.getElementById('solvedCanvas'), l=document.createElement('a');
+  l.download='lebaran_puzzle_'+Date.now()+'.png'; l.href=c.toDataURL('image/png'); l.click();
 }
 
-// ══════════════════════════════════════════════════════
-//  FIREWORKS
-// ══════════════════════════════════════════════════════
+// ── FIREWORKS ──
 function launchFireworks() {
-  const canvas = document.getElementById('fwCanvas');
-  canvas.width  = window.innerWidth;
-  canvas.height = window.innerHeight;
-  const ctx = canvas.getContext('2d');
-  const colors = ['#724E91','#ff7728','#f2c94c','#fff','#e74c3c','#2ecc71','#3498db','#fd79a8'];
-  let particles = [];
-  let launching = true;
-
-  function burst(x, y) {
-    const n = 70 + Math.floor(Math.random() * 40);
-    for (let i = 0; i < n; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const speed = 2 + Math.random() * 7;
-      particles.push({
-        x, y,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed - 2,
-        alpha: 1,
-        decay: 0.01 + Math.random() * 0.012,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        size: 2.5 + Math.random() * 4
-      });
-    }
-  }
-
-  const spots = [
-    [.25,.28],[.75,.22],[.5,.14],[.15,.45],[.85,.38],
-    [.4,.18],[.6,.3],[.3,.35],[.7,.12],[.5,.38],
-    [.12,.18],[.88,.25],[.5,.08],[.35,.5],[.65,.45]
-  ];
-  spots.forEach(([rx, ry], i) => {
-    setTimeout(() => {
-      if (launching) burst(rx * canvas.width, ry * canvas.height);
-    }, i * 300);
-  });
-  setTimeout(() => { launching = false; }, spots.length * 300 + 1200);
-
-  function draw() {
-    ctx.fillStyle = 'rgba(0,0,0,0.11)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    particles.forEach(p => {
-      p.x += p.vx; p.y += p.vy;
-      p.vy += 0.065; p.vx *= 0.99;
-      p.alpha = Math.max(0, p.alpha - p.decay);
-      ctx.globalAlpha = p.alpha;
-      ctx.fillStyle = p.color;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      ctx.fill();
-    });
-    ctx.globalAlpha = 1;
-    particles = particles.filter(p => p.alpha > 0);
-    if (particles.length || launching) requestAnimationFrame(draw);
-    else setTimeout(() => ctx.clearRect(0, 0, canvas.width, canvas.height), 300);
+  const canvas=document.getElementById('fwCanvas');
+  canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+  const ctx=canvas.getContext('2d');
+  const colors=['#724E91','#ff7728','#f2c94c','#fff','#e74c3c','#2ecc71','#3498db','#fd79a8'];
+  let parts=[], launching=true;
+  function burst(x,y){ for(let i=0;i<80;i++){const a=Math.random()*Math.PI*2,sp=2+Math.random()*7; parts.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,alpha:1,decay:0.01+Math.random()*0.012,color:colors[Math.floor(Math.random()*colors.length)],size:2.5+Math.random()*4});} }
+  const spots=[[.25,.28],[.75,.22],[.5,.14],[.15,.45],[.85,.38],[.4,.18],[.6,.3],[.3,.35],[.7,.12],[.5,.38],[.12,.18],[.88,.25],[.5,.08],[.35,.5],[.65,.45]];
+  spots.forEach(([rx,ry],i)=>setTimeout(()=>{if(launching)burst(rx*canvas.width,ry*canvas.height);},i*300));
+  setTimeout(()=>{launching=false;},spots.length*300+1200);
+  function draw(){
+    ctx.fillStyle='rgba(0,0,0,0.11)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    parts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.065;p.vx*=0.99;p.alpha=Math.max(0,p.alpha-p.decay);ctx.globalAlpha=p.alpha;ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();});
+    ctx.globalAlpha=1; parts=parts.filter(p=>p.alpha>0);
+    if(parts.length||launching)requestAnimationFrame(draw);
+    else setTimeout(()=>ctx.clearRect(0,0,canvas.width,canvas.height),300);
   }
   draw();
 }
 
-// ══════════════════════════════════════════════════════
-//  HINT
-// ══════════════════════════════════════════════════════
-function showHint() {
-  document.getElementById('hintImg').src = PUZZLE_IMAGE;
-  document.getElementById('hintModal').classList.add('show');
-
-  if (typeof gtag !== 'undefined') {
-    gtag('event', 'hint_used', { 'event_category': 'Game', 'event_label': 'Lebaran Puzzle' });
-  }
-}
-
-function closeHint() {
-  document.getElementById('hintModal').classList.remove('show');
-}
-
-(function () {
-  const m = document.getElementById('hintModal');
-  let drag = false, ox = 0, oy = 0;
-  m.addEventListener('mousedown', e => {
-    if (['BUTTON','INPUT','IMG'].includes(e.target.tagName)) return;
-    drag = true;
-    const r = m.getBoundingClientRect();
-    ox = e.clientX - r.left; oy = e.clientY - r.top;
-    m.style.transform = 'none';
-    m.style.left = r.left + 'px'; m.style.top = r.top + 'px';
-  });
-  document.addEventListener('mousemove', e => {
-    if (!drag) return;
-    m.style.left = (e.clientX - ox) + 'px';
-    m.style.top  = (e.clientY - oy) + 'px';
-  });
-  document.addEventListener('mouseup', () => drag = false);
+// ── HINT ──
+function showHint(){ document.getElementById('hintImg').src=PUZZLE_IMAGE; document.getElementById('hintModal').classList.add('show'); }
+function closeHint(){ document.getElementById('hintModal').classList.remove('show'); }
+(function(){
+  const m=document.getElementById('hintModal'); let drag=false,ox=0,oy=0;
+  m.addEventListener('mousedown',e=>{if(['BUTTON','INPUT','IMG'].includes(e.target.tagName))return;drag=true;const r=m.getBoundingClientRect();ox=e.clientX-r.left;oy=e.clientY-r.top;m.style.transform='none';m.style.left=r.left+'px';m.style.top=r.top+'px';});
+  document.addEventListener('mousemove',e=>{if(drag){m.style.left=(e.clientX-ox)+'px';m.style.top=(e.clientY-oy)+'px';}});
+  document.addEventListener('mouseup',()=>drag=false);
 })();
 </script>
 </body>
