@@ -233,6 +233,8 @@ const QUOTES = [
   "The most beautiful thing a woman can wear is her confidence — and a smile that survived everything.",
   "Every year, Eid arrives to remind us: you made it through. Now celebrate like you mean it."
 ];
+
+const IMAGES = [
   'https://raw.githubusercontent.com/pipit10364/CMON/main/CMON%202026_20260314_163020_0000.png',
   'https://raw.githubusercontent.com/pipit10364/CMON/main/CMON%202026%20(4).png',
   'https://raw.githubusercontent.com/pipit10364/CMON/main/CMON%202026%20(5).png',
@@ -240,6 +242,7 @@ const QUOTES = [
   'https://raw.githubusercontent.com/pipit10364/CMON/main/CMON%202026%20(7).png',
   'https://raw.githubusercontent.com/pipit10364/CMON/main/CMON%202026%20(8).png'
 ];
+
 const GRID      = 6;
 const TOTAL     = GRID * GRID;
 const SNAP_DIST = 32;   // snap threshold in px
@@ -417,9 +420,6 @@ function updateMergedCount() {
   });
   mergedTotal = merged;
 
-  // Completion: any group that has all TOTAL pieces
-  // No need to verify arrangement — snap logic already guarantees
-  // pieces only join if correctly adjacent, so a group of 36 = solved
   const big = groups.find(g => g && g.members.length === TOTAL);
   if (big) { setTimeout(finishPuzzle, 300); return; }
 
@@ -436,8 +436,6 @@ function updateMergedCount() {
 
 // ══════════════════════════════════════════════════════
 //  SNAP
-//  After moving group aIdx, check all other groups for
-//  correct relative alignment → merge
 // ══════════════════════════════════════════════════════
 function trySnap(movedIdx) {
   if (!groups[movedIdx]) return;
@@ -447,17 +445,13 @@ function trySnap(movedIdx) {
     if (i === movedIdx || !groups[i]) continue;
     const og = groups[i];
 
-    // Only snap if the two pieces are DIRECTLY adjacent (touching edges)
-    // i.e. |colDiff| + |rowDiff| === 1  (no diagonals, no gaps)
     for (const mm of mg.members) {
       for (const om of og.members) {
         const colDiff = mm.col - om.col;
         const rowDiff = mm.row - om.row;
 
-        // Must be exactly one step apart (cardinal direction only)
         if (Math.abs(colDiff) + Math.abs(rowDiff) !== 1) continue;
 
-        // Expected canvas position of mm if correctly adjacent to om
         const expX = og.x + om.ox + colDiff * PP;
         const expY = og.y + om.oy + rowDiff * PP;
         const actX = mg.x + mm.ox;
@@ -465,14 +459,11 @@ function trySnap(movedIdx) {
 
         const dx = actX - expX, dy = actY - expY;
         if (Math.hypot(dx, dy) < SNAP_DIST) {
-          // Snap mg to exact correct position
           mg.x -= dx; mg.y -= dy;
           mg.el.style.left = mg.x + 'px';
           mg.el.style.top  = mg.y + 'px';
 
-          // Merge mg into og
           mergeInto(i, movedIdx);
-          // Recurse: enlarged og might snap to more groups
           trySnap(i);
           return;
         }
@@ -501,11 +492,9 @@ function initPuzzle() {
   const vw = window.innerWidth;
   const vh = window.innerHeight - hdrH;
 
-  // Piece size: puzzle fills ~55% of min(vw, vh)
   PP = Math.max(44, Math.floor(Math.min(vw, vh) * 0.55 / GRID));
   const puzzleSz = PP * GRID;
 
-  // Canvas: just big enough to hold puzzle + margin all around
   const MARGIN  = Math.max(120, puzzleSz * 0.6);
   const CW      = puzzleSz + MARGIN * 2;
   const CH      = puzzleSz + MARGIN * 2;
@@ -515,8 +504,6 @@ function initPuzzle() {
   cvs.style.width  = CW + 'px';
   cvs.style.height = CH + 'px';
 
-  // Scatter pieces across the full canvas area (including margins)
-  // so they're all visible within one scroll
   const all = [];
   for (let r = 0; r < GRID; r++)
     for (let c = 0; c < GRID; c++)
@@ -524,10 +511,9 @@ function initPuzzle() {
   shuffleArr(all);
 
   all.forEach(p => {
-    // Random position across the WHOLE canvas, avoid a small center zone
     let x, y, tries = 0;
     const cx = CW / 2, cy = CH / 2;
-    const safeR = puzzleSz * 0.35; // avoid very center
+    const safeR = puzzleSz * 0.35;
     do {
       x = PP + Math.random() * (CW - PP * 3);
       y = PP + Math.random() * (CH - PP * 3);
@@ -536,7 +522,6 @@ function initPuzzle() {
     makeGroup(p.r, p.c, x, y);
   });
 
-  // Start viewport so the whole canvas is visible (zoomed out to fit)
   panX = (vw  - CW) / 2;
   panY = (vh  - CH) / 2;
   applyPan();
@@ -546,7 +531,7 @@ function initPuzzle() {
 }
 
 // ══════════════════════════════════════════════════════
-//  PAN — background drag (pointer NOT on a group)
+//  PAN
 // ══════════════════════════════════════════════════════
 function applyPan() {
   document.getElementById('gameCanvas').style.transform = `translate(${panX}px,${panY}px)`;
@@ -555,9 +540,8 @@ function applyPan() {
 const canvasWrap = document.getElementById('canvasWrap');
 
 canvasWrap.addEventListener('pointerdown', e => {
-  // Only pan if the target is the wrap itself or the gameCanvas background
   if (e.target.closest('.pgroup')) return;
-  if (panPtr) return; // only one pan pointer
+  if (panPtr) return;
   panPtr = { id: e.pointerId, sx: e.clientX, sy: e.clientY, ox: panX, oy: panY };
   canvasWrap.setPointerCapture(e.pointerId);
 }, { passive: false });
@@ -598,7 +582,6 @@ function onGroupDown(e) {
   el.style.zIndex = ++maxZ;
   el.classList.add('dragging');
 
-  // Convert pointer position to canvas space (accounting for pan)
   const startCanvasX = e.clientX - panX;
   const startCanvasY = e.clientY - panY - document.getElementById('header').offsetHeight;
 
@@ -662,14 +645,13 @@ function cleanDrag() {
 }
 
 // ══════════════════════════════════════════════════════
-//  COLLECT — spread singles evenly around existing groups
+//  COLLECT
 // ══════════════════════════════════════════════════════
 function collectPieces() {
   const cvs  = document.getElementById('gameCanvas');
   const CW   = parseFloat(cvs.style.width);
   const CH   = parseFloat(cvs.style.height);
 
-  // Find center of mass of multi-piece groups (or canvas center)
   const multiGroups = groups.filter(g => g && g.members.length > 1);
   let cx = CW / 2, cy = CH / 2;
   if (multiGroups.length) {
@@ -677,18 +659,15 @@ function collectPieces() {
     cy = multiGroups.reduce((s,g) => s + g.y + g.el.offsetHeight/2, 0) / multiGroups.length;
   }
 
-  // Place singles spread across the whole canvas area — not just a ring
   const singles = groups.filter(g => g && g.members.length === 1);
   const margin  = PP * 1.2;
   singles.forEach((g) => {
-    // Spread across canvas with some padding
     g.x = margin + Math.random() * (CW - PP - margin * 2);
     g.y = margin + Math.random() * (CH - PP - margin * 2);
     g.el.style.left = g.x + 'px';
     g.el.style.top  = g.y + 'px';
   });
 
-  // Pan to show center
   const vw = canvasWrap.offsetWidth;
   const vh = canvasWrap.offsetHeight;
   panX = vw/2 - cx;
@@ -753,7 +732,6 @@ function finishPuzzle() {
   img.onload = () => { canvas.width=img.naturalWidth; canvas.height=img.naturalHeight; canvas.getContext('2d').drawImage(img,0,0); };
   img.src = PUZZLE_IMAGE;
 
-  // Show random quote
   const q = QUOTES[Math.floor(Math.random() * QUOTES.length)];
   document.getElementById('victoryQuote').textContent = `"${q}"`;
 
