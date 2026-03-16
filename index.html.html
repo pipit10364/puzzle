@@ -149,19 +149,19 @@ html, body { font-family:'Inclusive Sans',sans-serif; background:var(--bg); over
 <div class="screen" id="startScreen">
   <div class="card">
     <h2>🌙 Lebaran Puzzle Challenge ✨</h2>
-    <p>Susun 36 puzzle pieces secepat mungkin! 🎉</p>
+    <p>Solve 36 puzzle pieces as fast as you can! 🎉</p>
     <p style="font-size:13px;color:#999;">
-      Drag pieces ke mana aja di area ini.<br>
-      Kalau posisi dua pieces udah bener → <strong>otomatis melekat</strong> dan bisa digeser bareng! 🔗<br>
-      Geser area kosong untuk navigasi.
+      Drag pieces anywhere on the board.<br>
+      Correctly placed neighbors <strong>snap together</strong> and move as one! 🔗<br>
+      Drag the background to navigate.
     </p>
     <div style="background:#f0e6ff;border-radius:12px;padding:14px 16px;margin:14px 0;text-align:left;">
-      <div style="font-size:13px;color:#724E91;margin-bottom:8px;" id="loadText">⏳ Memuat gambar…</div>
+      <div style="font-size:13px;color:#724E91;margin-bottom:8px;" id="loadText">⏳ Loading image…</div>
       <div style="background:#e0d0f0;border-radius:4px;height:8px;overflow:hidden;">
         <div id="loadBar" style="height:100%;background:var(--accent);width:0%;transition:width 0.25s;border-radius:4px;"></div>
       </div>
     </div>
-    <button class="btn" id="startBtn" disabled onclick="startPuzzle()">Memuat…</button>
+    <button class="btn" id="startBtn" disabled onclick="startPuzzle()">Loading…</button>
   </div>
 </div>
 
@@ -207,7 +207,7 @@ html, body { font-family:'Inclusive Sans',sans-serif; background:var(--bg); over
   <h1>🌙 Lebaran Puzzle Challenge ✨</h1>
   <div class="timer" id="timer">00:00.0</div>
   <div class="prog-wrap"><div class="prog-fill" id="progressFill"></div></div>
-  <div class="pieces-left" id="piecesLeft">Susun semua 36 pieces!</div>
+  <div class="pieces-left" id="piecesLeft">Solve all 36 pieces!</div>
 </div>
 
 <div id="canvasWrap">
@@ -215,7 +215,7 @@ html, body { font-family:'Inclusive Sans',sans-serif; background:var(--bg); over
 </div>
 
 <button class="hint-btn" onclick="showHint()">💡 Hint</button>
-<button id="collectBtn" onclick="collectPieces()">🧹 Kumpulkan</button>
+<button id="collectBtn" onclick="collectPieces()">🧹 Gather</button>
 
 <script>
 // ══════════════════════════════════════════════════════
@@ -294,11 +294,11 @@ PUZZLE_IMAGE = pickImage();
 preloadImage(PUZZLE_IMAGE)
   .catch(() => { PUZZLE_IMAGE = IMAGES[0]; return preloadImage(PUZZLE_IMAGE); })
   .then(() => {
-    document.getElementById('loadText').textContent = '✅ Gambar siap!';
+    document.getElementById('loadText').textContent = '✅ Image ready!';
     const btn = document.getElementById('startBtn');
-    btn.disabled = false; btn.textContent = '🚀 Mulai!';
+    btn.disabled = false; btn.textContent = '🚀 Start!';
   })
-  .catch(() => { document.getElementById('loadText').textContent = '❌ Gagal memuat.'; });
+  .catch(() => { document.getElementById('loadText').textContent = '❌ Failed to load image.'; });
 
 // ══════════════════════════════════════════════════════
 //  BG
@@ -430,8 +430,8 @@ function updateMergedCount() {
   const singles    = groups.filter(g => g && g.members.length === 1).length;
   document.getElementById('piecesLeft').textContent =
     mergedTotal > 0
-      ? `${mergedTotal} tersambung · ${singles} sendiri · ${groupCount} kelompok`
-      : `Susun semua ${TOTAL} pieces!`;
+      ? `${mergedTotal} connected · ${singles} solo · ${groupCount} groups`
+      : `Solve all ${TOTAL} pieces!`;
 }
 
 // ══════════════════════════════════════════════════════
@@ -542,7 +542,7 @@ function initPuzzle() {
   applyPan();
 
   document.getElementById('progressFill').style.width = '0%';
-  document.getElementById('piecesLeft').textContent = `Susun semua ${TOTAL} pieces!`;
+  document.getElementById('piecesLeft').textContent = `Solve all ${TOTAL} pieces!`;
 }
 
 // ══════════════════════════════════════════════════════
@@ -746,7 +746,7 @@ function finishPuzzle() {
   const elapsed = ((Date.now()-startTime)/1000).toFixed(1);
   document.getElementById('finalTime').textContent = '⏱ ' + elapsed + ' detik';
   document.getElementById('progressFill').style.width = '100%';
-  document.getElementById('piecesLeft').textContent = '✅ Semua pas! Selesai!';
+  document.getElementById('piecesLeft').textContent = '✅ All done!';
 
   const canvas = document.getElementById('solvedCanvas');
   const img = new Image(); img.crossOrigin = 'anonymous';
