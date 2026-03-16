@@ -172,7 +172,16 @@ html, body { font-family:'Inclusive Sans',sans-serif; background:var(--bg); over
     <div class="victory-time" id="finalTime">0.0s</div>
     <p>Puzzle selesai! Ini hasilnya:</p>
     <canvas id="solvedCanvas"></canvas>
-    <p style="font-size:13px;color:#999;">📸 Screenshot waktumu & share!</p>
+    <div id="victoryQuote" style="
+      background:linear-gradient(135deg,#f0e6ff,#fff8e8);
+      border-left:4px solid var(--accent);
+      border-radius:12px; padding:14px 16px;
+      margin:14px 0; text-align:left;
+      font-size:14px; color:#555; line-height:1.7;
+      font-style:italic;
+    "></div>
+    <p style="font-size:13px;color:#999;">📸 Screenshot waktumu & tag kami!</p>
+    <p style="font-size:15px;font-weight:600;color:var(--primary);margin-top:4px;">@cmo.rise</p>
     <div class="btn-row">
       <button class="btn btn-green" onclick="downloadImage()">📥 Download Foto</button>
       <button class="btn" onclick="restartGame()">🔄 Main Lagi</button>
@@ -212,7 +221,18 @@ html, body { font-family:'Inclusive Sans',sans-serif; background:var(--bg); over
 // ══════════════════════════════════════════════════════
 //  CONFIG
 // ══════════════════════════════════════════════════════
-const IMAGES = [
+const QUOTES = [
+  "A strong woman is one who feels deeply and loves fiercely. Her tears flow as abundantly as her laughter.",
+  "She was not fragile like a flower; she was fragile like a bomb.",
+  "Eid is a reminder that after every hardship comes ease — and after every fast, a feast worth celebrating.",
+  "Forgiveness is not something we do for others. We do it for ourselves, to get well and move on.",
+  "Home is not a place. It's the warmth of the people who greet you at the door.",
+  "A woman who walks in purpose doesn't have to chase people or opportunities. Her light causes them to find her.",
+  "Eid Mubarak — may your heart be as full as your table, and your table never be empty.",
+  "She made broken look beautiful and strong look invincible. She walked with the universe on her shoulders.",
+  "The most beautiful thing a woman can wear is her confidence — and a smile that survived everything.",
+  "Every year, Eid arrives to remind us: you made it through. Now celebrate like you mean it."
+];
   'https://raw.githubusercontent.com/pipit10364/CMON/main/CMON%202026_20260314_163020_0000.png',
   'https://raw.githubusercontent.com/pipit10364/CMON/main/CMON%202026%20(4).png',
   'https://raw.githubusercontent.com/pipit10364/CMON/main/CMON%202026%20(5).png',
@@ -732,6 +752,10 @@ function finishPuzzle() {
   const img = new Image(); img.crossOrigin = 'anonymous';
   img.onload = () => { canvas.width=img.naturalWidth; canvas.height=img.naturalHeight; canvas.getContext('2d').drawImage(img,0,0); };
   img.src = PUZZLE_IMAGE;
+
+  // Show random quote
+  const q = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+  document.getElementById('victoryQuote').textContent = `"${q}"`;
 
   document.getElementById('victoryScreen').classList.remove('hidden');
   document.getElementById('victoryScreen').scrollTop = 0;
